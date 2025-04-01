@@ -1037,6 +1037,8 @@ function calculateCircuitCredit(participant, event, trackDayIndices, circuit) {
         carsForDay.forEach((carPlate, carIdx) => {
             if (carPlate) {
                 const car = cars.find(c => c.license_plate === carPlate);
+                // Skip if no car is found
+                if (!car) return; // Continue to next carPlate if car is undefined
                 const modelKey = `${car.brand} ${car.model}`;
                 const packageType = (participant.package_per_day[dayIndex] && participant.package_per_day[dayIndex][carIdx]) || 'basic';
                 const key = `${modelKey}_${packageType}_${circuit.name}`;
@@ -1054,7 +1056,6 @@ function calculateCircuitCredit(participant, event, trackDayIndices, circuit) {
         const driven = group.driven;
         let carCost = 0;
 
-        // Ensure event.pricing exists, default to an empty object if not
         const pricing = event.pricing || {};
 
         if (circuit.pricing_type === "per lap") {
