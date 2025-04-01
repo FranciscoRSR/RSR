@@ -1608,69 +1608,14 @@ function saveBalances() {
         return;
     }
 
-    const uniqueCircuits = [...new Set(event.days.map(day => day.circuit ? day.circuit.name : null))].filter(c => c);
-
     event.participants.forEach((participant, index) => {
         const payment = parseFloat(document.getElementById(`payment_${index}`).value) || 0;
+        const paymentCircuit = document.getElementById(`paymentCircuit_${index}`).value;
+        const paymentMethod = document.getElementById(`paymentMethod_${index}`).value;
+        const paymentDate = document.getElementById(`paymentDate_${index}`).value;
+        const paymentObservation = document.getElementById(`paymentObservation_${index}`).value;
+
         if (payment > 0) {
-            const paymentCircuit = document.getElementById(`paymentCircuit_${index}`).value;
-            const paymentMethod = document.getElementById(`paymentMethod_${index}`).value;
-            const paymentDate = document.getElementById(`paymentDate_${index}`).value;
-            const paymentObservation = document.getElementById(`paymentObservation_${index}`).value;
-
-            // Initialize payment_details if it doesn't exist
-            participant.payment_details = participant.payment_details || [];
-
-            // Add the new payment
-            participant.payment_details.push({
-                amount: payment,
-                circuit: paymentCircuit,
-                method: paymentMethod,
-                date: paymentDate || new Date().toISOString().split('T')[0],
-                observation: paymentObservation || null
-            });
-
-            // Distribute payment across days based on circuit selection
-            let daysToUpdate;
-            if (paymentCircuit === "All") {
-                daysToUpdate = event.days.map((_, idx) => idx);
-            } else {
-                daysToUpdate = event.days
-                    .map((day, idx) => (day.circuit && day.circuit.name === paymentCircuit ? idx : -1))
-                    .filter(idx => idx !== -1);
-            }
-
-            const paymentPerDay = daysToUpdate.length > 0 ? payment / daysToUpdate.length : 0;
-            daysToUpdate.forEach(dayIndex => {
-                participant.paid_per_day[dayIndex] = (participant.paid_per_day[dayIndex] || 0) + paymentPerDay;
-            });
-
-            // Recalculate total credit used and paid status
-            let totalCreditUsed = 0;
-            event.days.forEach((day, dayIndex) => {
-                const circuit = day.circuit;
-                if (circuit) {
-                    const trackDayIndices = event.days
-                        .map((d, idx) => (d.circuit && d.circuit.name === circuit.name ? idx : -1))
-                        .filter(idx => idx !== -1);
-                    totalCreditUsed += calculateCircuitCredit(participant, event, trackDayIndices, circuit);
-                }
-            });
-
-            const totalPaid = participant.paid_per_day.reduce((sum, paid) => sum + paid, 0);
-            participant.credit_used = totalCreditUsed;
-            participant.paid_status = totalPaid >= totalCreditUsed;
-        }
-    });
-
-    saveData();
-    document.getElementById('processBalancesForm').style.display = 'none';
-    viewEvent(currentEventIndex);
-}
-
-            const totalPaid = participant.paid_per_day.reduce((sum, paid) => sum + paid, 0);
-            participant.paid_status = totalPaid >= totalCreditUsed;
-
             participant.payment_details = participant.payment_details || [];
             participant.payment_details.push({ 
                 amount: payment, 
@@ -1679,6 +1624,11 @@ function saveBalances() {
                 date: paymentDate || new Date().toISOString().split('T')[0], 
                 observation: paymentObservation || null 
             });
+            const daysParticipated = participant.car_per_day.filter(day => day.length > 0).length;
+            const paymentPerDay = daysParticipated > 0 ? payment / daysParticipated : 0;
+            participant.paid_per_day = participant.paid_per_day.map((paid, dayIdx) => 
+                participant.car_per_day[dayIdx].length > 0 ? paid + paymentPerDay : paid
+            );
         }
     });
 
