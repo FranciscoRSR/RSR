@@ -843,7 +843,7 @@ function saveParticipant(clientIndex) {
     event.participants.push(participant);
     saveData();
     document.getElementById('addParticipantModal').remove();
-    editEvent(currentEventIndex);
+    hideAllEditForms();
 }
 
 function enterDrivenData() {
