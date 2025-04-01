@@ -972,6 +972,7 @@ function saveDrivenData() {
     document.getElementById('enterDrivenDataForm').style.display = 'none';
     updateCarsTable();
     enterDrivenData()
+    editEvent(currentEventIndex);
 }
 
 // Discount calculation
