@@ -867,6 +867,12 @@ function updateDrivenDataClients() {
     const daySelector = document.getElementById('dayDrivenSelector');
     const dayIndex = parseInt(daySelector.value);
 
+    // Validate dayIndex
+    if (isNaN(dayIndex) || dayIndex < 0 || dayIndex >= event.days.length) {
+        console.error(`Invalid dayIndex: ${dayIndex}, event.days.length: ${event.days.length}`);
+        return; // Exit if dayIndex is invalid
+    }
+
     const drivenTableBody = document.getElementById('drivenTableBody');
     drivenTableBody.innerHTML = '';
 
@@ -877,22 +883,27 @@ function updateDrivenDataClients() {
         row.appendChild(nameCell);
 
         const carsForDay = participant.car_per_day[dayIndex] || [];
+        // Ensure driven_per_day exists and is an array
+        if (!participant.driven_per_day || !Array.isArray(participant.driven_per_day)) {
+            participant.driven_per_day = Array(event.days.length).fill([]);
+        }
         // Ensure driven_per_day[dayIndex] exists and matches carsForDay length
-        if (!participant.driven_per_day || !participant.driven_per_day[dayIndex]) {
-            participant.driven_per_day = participant.driven_per_day || [];
+        if (!participant.driven_per_day[dayIndex] || !Array.isArray(participant.driven_per_day[dayIndex])) {
             participant.driven_per_day[dayIndex] = Array(carsForDay.length).fill(0);
         } else if (participant.driven_per_day[dayIndex].length < carsForDay.length) {
-            // Extend the array if more cars were added
             participant.driven_per_day[dayIndex] = participant.driven_per_day[dayIndex].concat(
                 Array(carsForDay.length - participant.driven_per_day[dayIndex].length).fill(0)
             );
         }
 
+        // Debug log to check state
+        console.log(`Participant: ${participant.client.name} ${participant.client.surname}, Day: ${dayIndex}, Cars:`, carsForDay, 'Driven:', participant.driven_per_day[dayIndex]);
+
         const drivenInputs = carsForDay.map((carPlate, carIndex) => {
             const input = document.createElement('input');
             input.type = 'number';
             input.min = '0';
-            input.value = participant.driven_per_day[dayIndex][carIndex] || 0; // Safe now
+            input.value = participant.driven_per_day[dayIndex][carIndex] || 0; // Should be safe now
             input.addEventListener('change', () => {
                 participant.driven_per_day[dayIndex][carIndex] = parseFloat(input.value) || 0;
                 saveData();
