@@ -1840,9 +1840,18 @@ function updateClientsTable() {
             <td>${client.email}</td>
             <td>${client.country}</td>
             <td><button onclick="editClient(${index})">Edit</button></td>
+            <td><button onclick="deleteClient(${index})">Delete</button></td>
         `;
         tbody.appendChild(row);
     });
+}
+
+function deleteClient(index) {
+    if (confirm(`Are you sure you want to delete client "${clients[index].name} ${clients[index].surname}"?`)) {
+        clients.splice(index, 1);
+        saveData();
+        updateClientsTable();
+    }
 }
 
 function editClient(index) {
@@ -2021,9 +2030,18 @@ function updateCarsTable() {
             <td>€${car.fuel_cost_km.toFixed(2)}</td>
             <td>${car.highest_mileage.toFixed(2)}</td>
             <td><button onclick="editCar(${index})">Edit</button></td>
+            <td><button onclick="deleteCar(${index})">Delete</button></td>
         `;
         tbody.appendChild(row);
     });
+}
+
+function deleteCar(index) {
+    if (confirm(`Are you sure you want to delete car "${cars[index].brand} ${cars[index].model} (${cars[index].license_plate})"?`)) {
+        cars.splice(index, 1);
+        saveData();
+        updateCarsTable();
+    }
 }
 
 function editCar(index) {
@@ -2197,9 +2215,18 @@ function updateCircuitsTable() {
             <td>${circuit.length}</td>
             <td>${circuit.pricing_type}</td>
             <td><button onclick="editCircuit(${index})">Edit</button></td>
+            <td><button onclick="deleteCircuit(${index})">Delete</button></td>
         `;
         tbody.appendChild(row);
     });
+}
+
+function deleteCircuit(index) {
+    if (confirm(`Are you sure you want to delete circuit "${circuits[index].name}"?`)) {
+        circuits.splice(index, 1);
+        saveData();
+        updateCircuitsTable();
+    }
 }
 
 function editCircuit(index) {
