@@ -1,3 +1,4 @@
+
 // Firebase Initialization
 const firebaseConfig = {
     apiKey: "AIzaSyCVH9tFfsmm040flswAVgPoXWAqcb_CDqY",
@@ -917,7 +918,7 @@ function updateDrivenDataClients() {
         carsForDay.forEach((carPlate, carIndex) => {
             const car = cars.find(c => c.license_plate === carPlate);
             inputsHTML += `
-                <label>${car ? `${car.model} (${carPlate})` : carPlate} (${unit}): 
+                <label>${car ? `${car.brand} ${car.model} (${carPlate})` : carPlate} (${unit}): 
                     <input type="number" min="0" id="drivenValue_${participantIndex}_${carIndex}" 
                            value="${participant.driven_per_day[dayIndex][carIndex] || 0}">
                 </label><br>
