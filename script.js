@@ -854,11 +854,9 @@ function saveParticipant(clientIndex) {
 }
 
 function enterDrivenData() {
-    hideAllEditForms();
-    const event = events[currentEventIndex];
-    const daySelect = document.getElementById('drivenDay');
-    daySelect.innerHTML = '<option value="">Select Day</option>' + event.days.map((_, i) => `<option value="${i}">Day ${i + 1}</option>`).join('');
-    document.getElementById('enterDrivenDataForm').style.display = 'block';
+    console.log('enterDrivenData called, checking DOM for dayDrivenSelector');
+    const daySelectorCheck = document.getElementById('dayDrivenSelector');
+    console.log('dayDrivenSelector element:', daySelectorCheck);
     updateDrivenDataClients();
 }
 
@@ -871,7 +869,7 @@ function updateDrivenDataClients() {
 
     const daySelector = document.getElementById('dayDrivenSelector');
     if (!daySelector) {
-        console.error("Element with ID 'dayDrivenSelector' not found");
+        console.error("Element with ID 'dayDrivenSelector' not found in DOM");
         return;
     }
 
