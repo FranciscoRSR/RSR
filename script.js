@@ -878,28 +878,34 @@ function updateDrivenDataClients() {
     const drivenDaySelect = document.getElementById('drivenDay');
     const drivenDataInputs = document.getElementById('drivenDataInputs');
     
+    // Check if drivenDay exists
     if (!drivenDaySelect) {
         drivenDataInputs.innerHTML = '<p>Error: Day selector not found.</p>';
         return;
     }
     
     const dayIndex = parseInt(drivenDaySelect.value);
-    const unit = circuit ? (circuit.pricing_type === 'per km' ? 'km' : 'laps') : 'laps';
-    if (!circuit) {
-        drivenDataInputs.innerHTML = '<p>Warning: No circuit set for this day. Assuming laps.</p>';
-    }
     drivenDataInputs.innerHTML = '';
     
+    // If no valid day is selected, show a message
     if (isNaN(dayIndex) || dayIndex < 0 || dayIndex >= event.days.length) {
         drivenDataInputs.innerHTML = '<p>Please select a valid day.</p>';
         return;
     }
 
+    // Define circuit first
     const circuit = event.days[dayIndex].circuit;
+    const unit = circuit ? (circuit.pricing_type === 'per km' ? 'km' : 'laps') : 'laps';
+    
+    // Warn if no circuit is set
+    if (!circuit) {
+        drivenDataInputs.innerHTML = '<p>Warning: No circuit set for this day. Assuming laps.</p>';
+    }
 
     event.participants.forEach((participant, participantIndex) => {
         const carsForDay = participant.car_per_day[dayIndex] || [];
         
+        // Initialize driven_per_day if missing
         if (!Array.isArray(participant.driven_per_day)) {
             participant.driven_per_day = Array(event.days.length).fill(null).map(() => []);
         }
@@ -926,7 +932,6 @@ function updateDrivenDataClients() {
         drivenDataInputs.innerHTML += inputsHTML;
     });
 }
-
 function saveDrivenData() {
     const event = events[currentEventIndex];
     const dayIndex = parseInt(document.getElementById('drivenDay').value);
