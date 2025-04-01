@@ -1,4 +1,3 @@
-
 // Firebase Initialization
 const firebaseConfig = {
     apiKey: "AIzaSyCVH9tFfsmm040flswAVgPoXWAqcb_CDqY",
@@ -865,34 +864,46 @@ function enterDrivenData() {
 
 function updateDrivenDataClients() {
     const event = events[currentEventIndex];
-    const dayIndex = parseInt(document.getElementById('drivenDay').value);
-    const drivenInputs = document.getElementById('drivenDataInputs');
-    drivenInputs.innerHTML = '';
+    const daySelector = document.getElementById('dayDrivenSelector');
+    const dayIndex = parseInt(daySelector.value);
 
-    if (isNaN(dayIndex)) return;
+    const drivenTableBody = document.getElementById('drivenTableBody');
+    drivenTableBody.innerHTML = '';
 
-    const participantsOnDay = event.participants.filter(p => p.car_per_day[dayIndex].length > 0);
-    if (participantsOnDay.length === 0) {
-        drivenInputs.innerHTML = '<p>No participants assigned to this day.</p>';
-        return;
-    }
+    event.participants.forEach((participant, participantIndex) => {
+        const row = document.createElement('tr');
+        const nameCell = document.createElement('td');
+        nameCell.textContent = `${participant.client.name} ${participant.client.surname}`;
+        row.appendChild(nameCell);
 
-    participantsOnDay.forEach((participant, pIndex) => {
-        const circuit = event.days[dayIndex].circuit;
-        const carsForDay = participant.car_per_day[dayIndex];
-        drivenInputs.innerHTML += `
-            <div>
-                <h4>${participant.client.name} ${participant.client.surname}</h4>
-                ${carsForDay.map((carPlate, carIdx) => {
-                    const driven = participant.driven_per_day[dayIndex][carIdx] || 0;
-                    return `
-                        <label>${carPlate} (${circuit ? circuit.pricing_type === 'per lap' ? 'laps' : 'km' : 'N/A'}): 
-                            <input type="number" id="drivenValue_${pIndex}_${carIdx}" value="${driven}" step="0.01">
-                        </label><br>
-                    `;
-                }).join('')}
-            </div>
-        `;
+        const carsForDay = participant.car_per_day[dayIndex] || [];
+        // Ensure driven_per_day[dayIndex] exists and matches carsForDay length
+        if (!participant.driven_per_day || !participant.driven_per_day[dayIndex]) {
+            participant.driven_per_day = participant.driven_per_day || [];
+            participant.driven_per_day[dayIndex] = Array(carsForDay.length).fill(0);
+        } else if (participant.driven_per_day[dayIndex].length < carsForDay.length) {
+            // Extend the array if more cars were added
+            participant.driven_per_day[dayIndex] = participant.driven_per_day[dayIndex].concat(
+                Array(carsForDay.length - participant.driven_per_day[dayIndex].length).fill(0)
+            );
+        }
+
+        const drivenInputs = carsForDay.map((carPlate, carIndex) => {
+            const input = document.createElement('input');
+            input.type = 'number';
+            input.min = '0';
+            input.value = participant.driven_per_day[dayIndex][carIndex] || 0; // Safe now
+            input.addEventListener('change', () => {
+                participant.driven_per_day[dayIndex][carIndex] = parseFloat(input.value) || 0;
+                saveData();
+            });
+            const cell = document.createElement('td');
+            cell.appendChild(input);
+            return cell;
+        });
+
+        drivenInputs.forEach(cell => row.appendChild(cell));
+        drivenTableBody.appendChild(row);
     });
 }
 
