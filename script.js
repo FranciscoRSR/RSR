@@ -854,21 +854,40 @@ function saveParticipant(clientIndex) {
 }
 
 function enterDrivenData() {
-    hideAllEditForms();
-    const event = events[currentEventIndex];
-    const daySelect = document.getElementById('drivenDay');
-    daySelect.innerHTML = '<option value="">Select Day</option>' + event.days.map((_, i) => `<option value="${i}">Day ${i + 1}</option>`).join('');
-    document.getElementById('enterDrivenDataForm').style.display = 'block';
-    updateDrivenDataClients();
+    const form = document.getElementById('enterDrivenDataForm');
+    form.style.display = 'block';
+    
+    // Populate the drivenDay dropdown if not already done
+    const drivenDaySelect = document.getElementById('drivenDay');
+    if (drivenDaySelect.options.length === 0) {
+        const event = events[currentEventIndex];
+        event.days.forEach((day, index) => {
+            const option = document.createElement('option');
+            option.value = index;
+            option.text = day.name || `Day ${index + 1}`;
+            drivenDaySelect.appendChild(option);
+        });
+    }
+    
+    // Call updateDrivenDataClients after a slight delay to ensure DOM is ready
+    setTimeout(updateDrivenDataClients, 10);
 }
 
 function updateDrivenDataClients() {
     const event = events[currentEventIndex];
-    const dayIndex = parseInt(document.getElementById('drivenDay').value);
+    const drivenDaySelect = document.getElementById('drivenDay');
     const drivenDataInputs = document.getElementById('drivenDataInputs');
+    
+    // Check if drivenDay exists and has a value
+    if (!drivenDaySelect) {
+        drivenDataInputs.innerHTML = '<p>Error: Day selector not found.</p>';
+        return;
+    }
+    
+    const dayIndex = parseInt(drivenDaySelect.value);
     drivenDataInputs.innerHTML = '';
-
-    // If no valid day is selected, exit early
+    
+    // If no valid day is selected, show a message
     if (isNaN(dayIndex) || dayIndex < 0 || dayIndex >= event.days.length) {
         drivenDataInputs.innerHTML = '<p>Please select a valid day.</p>';
         return;
@@ -876,20 +895,17 @@ function updateDrivenDataClients() {
 
     event.participants.forEach((participant, participantIndex) => {
         const carsForDay = participant.car_per_day[dayIndex] || [];
-
-        // Ensure driven_per_day is an array with sub-arrays for each day
+        
+        // Initialize driven_per_day if missing
         if (!Array.isArray(participant.driven_per_day)) {
             participant.driven_per_day = Array(event.days.length).fill(null).map(() => []);
         }
-        // Ensure driven_per_day[dayIndex] exists and matches carsForDay length
         if (!Array.isArray(participant.driven_per_day[dayIndex])) {
             participant.driven_per_day[dayIndex] = Array(carsForDay.length).fill(0);
         } else if (participant.driven_per_day[dayIndex].length < carsForDay.length) {
             participant.driven_per_day[dayIndex] = participant.driven_per_day[dayIndex].concat(
                 Array(carsForDay.length - participant.driven_per_day[dayIndex].length).fill(0)
             );
-        } else if (participant.driven_per_day[dayIndex].length > carsForDay.length) {
-            participant.driven_per_day[dayIndex] = participant.driven_per_day[dayIndex].slice(0, carsForDay.length);
         }
 
         let inputsHTML = `
