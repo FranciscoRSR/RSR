@@ -305,6 +305,10 @@ footer {
         padding: 20px;
     }
 
+    .section {
+    display: none;
+    }
+
     table, thead, tbody, th, td, tr {
         display: block;
     }
