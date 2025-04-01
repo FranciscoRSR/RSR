@@ -864,30 +864,40 @@ function enterDrivenData() {
 
 function updateDrivenDataClients() {
     const event = events[currentEventIndex];
-    const daySelector = document.getElementById('dayDrivenSelector');
-    const dayIndex = parseInt(daySelector.value);
+    if (!event) {
+        console.error('No current event found');
+        return;
+    }
 
-    // Validate dayIndex
+    const daySelector = document.getElementById('dayDrivenSelector');
+    if (!daySelector) {
+        console.error("Element with ID 'dayDrivenSelector' not found");
+        return;
+    }
+
+    const dayIndex = parseInt(daySelector.value);
     if (isNaN(dayIndex) || dayIndex < 0 || dayIndex >= event.days.length) {
         console.error(`Invalid dayIndex: ${dayIndex}, event.days.length: ${event.days.length}`);
-        return; // Exit if dayIndex is invalid
+        return;
     }
 
     const drivenTableBody = document.getElementById('drivenTableBody');
+    if (!drivenTableBody) {
+        console.error("Element with ID 'drivenTableBody' not found");
+        return;
+    }
     drivenTableBody.innerHTML = '';
 
     event.participants.forEach((participant, participantIndex) => {
         const row = document.createElement('tr');
         const nameCell = document.createElement('td');
-        nameCell.textContent = `${participant.client.name} ${participant.client.surname}`;
+        nameCell.textContent = participant.client ? `${participant.client.name} ${participant.client.surname}` : 'Unknown Participant';
         row.appendChild(nameCell);
 
         const carsForDay = participant.car_per_day[dayIndex] || [];
-        // Ensure driven_per_day exists and is an array
         if (!participant.driven_per_day || !Array.isArray(participant.driven_per_day)) {
             participant.driven_per_day = Array(event.days.length).fill([]);
         }
-        // Ensure driven_per_day[dayIndex] exists and matches carsForDay length
         if (!participant.driven_per_day[dayIndex] || !Array.isArray(participant.driven_per_day[dayIndex])) {
             participant.driven_per_day[dayIndex] = Array(carsForDay.length).fill(0);
         } else if (participant.driven_per_day[dayIndex].length < carsForDay.length) {
@@ -896,14 +906,13 @@ function updateDrivenDataClients() {
             );
         }
 
-        // Debug log to check state
-        console.log(`Participant: ${participant.client.name} ${participant.client.surname}, Day: ${dayIndex}, Cars:`, carsForDay, 'Driven:', participant.driven_per_day[dayIndex]);
+        console.log(`Participant: ${nameCell.textContent}, Day: ${dayIndex}, Cars:`, carsForDay, 'Driven:', participant.driven_per_day[dayIndex]);
 
         const drivenInputs = carsForDay.map((carPlate, carIndex) => {
             const input = document.createElement('input');
             input.type = 'number';
             input.min = '0';
-            input.value = participant.driven_per_day[dayIndex][carIndex] || 0; // Should be safe now
+            input.value = participant.driven_per_day[dayIndex][carIndex] || 0;
             input.addEventListener('change', () => {
                 participant.driven_per_day[dayIndex][carIndex] = parseFloat(input.value) || 0;
                 saveData();
