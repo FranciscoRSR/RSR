@@ -1620,68 +1620,95 @@ function saveBalances() {
             });
 
             event.days.forEach((day, dayIndex) => {
-                const circuit = day.circuit;
-                let dayCost = 0;
-                if (circuit) {
-                    const trackDayIndices = trackGroups[circuit.name];
-                    const modelGroups = {};
-                    trackDayIndices.forEach(dIdx => {
-                        participant.car_per_day[dIdx].forEach((carPlate, carIdx) => {
-                            if (carPlate) {
-                                const car = cars.find(c => c.license_plate === carPlate);
-                                const modelKey = `${car.brand} ${car.model}`;
-                                if (!modelGroups[modelKey]) {
-                                    modelGroups[modelKey] = { driven: 0, package: participant.package_per_day[dIdx][carIdx], pricing: car };
-                                }
-                                modelGroups[modelKey].driven += participant.driven_per_day[dIdx][carIdx] || 0;
-                            }
-                        });
-                    });
-
-                    const dailyModelGroups = {};
-                    participant.car_per_day[dayIndex].forEach((carPlate, carIdx) => {
-                        if (carPlate) {
-                            const car = cars.find(c => c.license_plate === carPlate);
-                            const modelKey = `${car.brand} ${car.model}`;
-                            if (!dailyModelGroups[modelKey]) {
-                                dailyModelGroups[modelKey] = { driven: modelGroups[modelKey].driven, package: participant.package_per_day[dayIndex][carIdx], pricing: car };
-                            }
-                        }
-                    });
-
-                    for (const model in dailyModelGroups) {
-                        const group = dailyModelGroups[model];
-                        const driven = group.driven;
-                        const packageType = group.package;
-                        let carCost = 0;
-
-                        if (circuit.pricing_type === "per lap") {
-                            const basicCostPerLap = event.pricing[`${group.pricing.license_plate}_basic_lap`] || group.pricing.basic_price_lap;
-                            const allIncCostPerLap = event.pricing[`${group.pricing.license_plate}_all_inc_lap`] || group.pricing.all_inc_price_lap;
-                            const discount = getDiscount(driven, "per lap");
-                            const discountedBasicCost = basicCostPerLap * (1 - discount);
-                            carCost = driven * discountedBasicCost;
-                            if (packageType === "all_inc") {
-                                carCost += driven * allIncCostPerLap;
-                            }
-                        } else {
-                            const basicCostPerKm = event.pricing[`${group.pricing.license_plate}_basic_km`] || group.pricing.basic_price_km;
-                            const fuelCostPerKm = event.pricing[`${group.pricing.license_plate}_fuel_cost_km`] || group.pricing.fuel_cost_km;
-                            const discount = getDiscount(driven, "per km");
-                            const discountedBasicCost = basicCostPerKm * (1 - discount);
-                            carCost = driven * discountedBasicCost;
-                            if (packageType === "all_inc") {
-                                let baseFuelCost = circuit.name === "Spa" || circuit.name === "Nürburgring GP Track" 
-                                    ? Math.round(fuelCostPerKm * 10) / 10 
-                                    : Math.round((fuelCostPerKm * 1.3) * 10) / 10;
-                                carCost += driven * baseFuelCost;
-                            }
-                        }
-                        dayCost += carCost / trackDayIndices.length;
+    const circuit = day.circuit;
+    let dayCost = 0;
+    if (circuit) {
+        const trackDayIndices = trackGroups[circuit.name];
+        const modelGroups = {};
+        trackDayIndices.forEach(dIdx => {
+            participant.car_per_day[dIdx].forEach((carPlate, carIdx) => {
+                if (carPlate) {
+                    const car = cars.find(c => c.license_plate === carPlate);
+                    if (!car) {
+                        console.warn(`Car with license plate ${carPlate} not found in cars list.`);
+                        return; // Skip if car not found
                     }
+                    const modelKey = `${car.brand} ${car.model}`;
+                    if (!modelGroups[modelKey]) {
+                        modelGroups[modelKey] = { driven: 0, package: participant.package_per_day[dIdx][carIdx], pricing: car };
+                    }
+                    modelGroups[modelKey].driven += participant.driven_per_day[dIdx][carIdx] || 0;
                 }
-                totalCreditUsed += dayCost;
             });
+        });
+
+        const dailyModelGroups = {};
+        participant.car_per_day[dayIndex].forEach((carPlate, carIdx) => {
+            if (carPlate) {
+                const car = cars.find(c => c.license_plate === carPlate);
+                if (!car) return; // Skip if car not found
+                const modelKey = `${car.brand} ${car.model}`;
+                if (!dailyModelGroups[modelKey]) {
+                    dailyModelGroups[modelKey] = { driven: modelGroups[modelKey].driven, package: participant.package_per_day[dayIndex][carIdx], pricing: car };
+                }
+            }
+        });
+
+        for (const model in dailyModelGroups) {
+            const group = dailyModelGroups[model];
+            const driven = group.driven;
+            const packageType = group.package || "basic"; // Default to "basic" if undefined
+            let carCost = 0;
+
+            // Ensure event.pricing exists, initialize if not
+            if (!event.pricing) {
+                event.pricing = {};
+                console.warn(`Pricing object missing for event ${event.name}. Using default car pricing.`);
+            }
+
+            if (circuit.pricing_type === "per lap") {
+                const basicCostPerLap = event.pricing[`${group.pricing.license_plate}_basic_lap`] !== undefined 
+                    ? event.pricing[`${group.pricing.license_plate}_basic_lap`] 
+                    : (group.pricing.basic_price_lap || 0);
+                const allIncCostPerLap = event.pricing[`${group.pricing.license_plate}_all_inc_lap`] !== undefined 
+                    ? event.pricing[`${group.pricing.license_plate}_all_inc_lap`] 
+                    : (group.pricing.all_inc_price_lap || 0);
+                if (basicCostPerLap === 0) {
+                    console.warn(`No basic price per lap set for ${group.pricing.license_plate} in event ${event.name}.`);
+                }
+                const discount = getDiscount(driven, "per lap");
+                const discountedBasicCost = basicCostPerLap * (1 - discount);
+                carCost = driven * discountedBasicCost;
+                if (packageType === "all_inc") {
+                    carCost += driven * allIncCostPerLap;
+                } else if (packageType === "fuel_inc") {
+                    carCost += driven * (allIncCostPerLap - 35); // Assuming fuel-inc adjustment
+                }
+            } else {
+                const basicCostPerKm = event.pricing[`${group.pricing.license_plate}_basic_km`] !== undefined 
+                    ? event.pricing[`${group.pricing.license_plate}_basic_km`] 
+                    : (group.pricing.basic_price_km || 0);
+                const fuelCostPerKm = event.pricing[`${group.pricing.license_plate}_fuel_cost_km`] !== undefined 
+                    ? event.pricing[`${group.pricing.license_plate}_fuel_cost_km`] 
+                    : (group.pricing.fuel_cost_km || 0);
+                if (basicCostPerKm === 0) {
+                    console.warn(`No basic price per km set for ${group.pricing.license_plate} in event ${event.name}.`);
+                }
+                const discount = getDiscount(driven, "per km");
+                const discountedBasicCost = basicCostPerKm * (1 - discount);
+                carCost = driven * discountedBasicCost;
+                if (packageType === "fuel_inc" || packageType === "all_inc") {
+                    let baseFuelCost = circuit.name === "Spa" || circuit.name === "Nürburgring GP Track" 
+                        ? Math.round(fuelCostPerKm * 10) / 10 
+                        : Math.round((fuelCostPerKm * 1.3) * 10) / 10;
+                    carCost += driven * baseFuelCost;
+                }
+            }
+            dayCost += carCost / trackDayIndices.length;
+        }
+    }
+    totalCreditUsed += dayCost;
+});
 
             const totalPaid = participant.paid_per_day.reduce((sum, paid) => sum + paid, 0);
             participant.paid_status = totalPaid >= totalCreditUsed;
