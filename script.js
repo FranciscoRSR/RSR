@@ -1031,7 +1031,6 @@ function calculateCircuitCredit(participant, event, trackDayIndices, circuit) {
 
     const usageGroups = {};
     trackDayIndices.forEach(dayIndex => {
-        // Ensure car_per_day and driven_per_day are defined for this day
         const carsForDay = participant.car_per_day[dayIndex] || [];
         const drivenForDay = (participant.driven_per_day && participant.driven_per_day[dayIndex]) || [];
 
@@ -1044,7 +1043,6 @@ function calculateCircuitCredit(participant, event, trackDayIndices, circuit) {
                 if (!usageGroups[key]) {
                     usageGroups[key] = { driven: 0, pricing: car, package: packageType };
                 }
-                // Safely access driven_per_day with a fallback to 0
                 usageGroups[key].driven += drivenForDay[carIdx] || 0;
             }
         });
@@ -1056,17 +1054,20 @@ function calculateCircuitCredit(participant, event, trackDayIndices, circuit) {
         const driven = group.driven;
         let carCost = 0;
 
+        // Ensure event.pricing exists, default to an empty object if not
+        const pricing = event.pricing || {};
+
         if (circuit.pricing_type === "per lap") {
-            const basicCostPerLap = event.pricing[`${group.pricing.license_plate}_basic_lap`] || group.pricing.basic_price_lap;
-            const allIncCostPerLap = event.pricing[`${group.pricing.license_plate}_all_inc_lap`] || group.pricing.all_inc_price_lap;
+            const basicCostPerLap = pricing[`${group.pricing.license_plate}_basic_lap`] || group.pricing.basic_price_lap || 0;
+            const allIncCostPerLap = pricing[`${group.pricing.license_plate}_all_inc_lap`] || group.pricing.all_inc_price_lap || 0;
             const discount = getDiscount(driven, "per lap");
             const discountedBasicCost = basicCostPerLap * (1 - discount);
             carCost = driven * discountedBasicCost;
             if (group.package === "fuel_inc") carCost += driven * (allIncCostPerLap - 35);
             else if (group.package === "all_inc") carCost += driven * allIncCostPerLap;
         } else {
-            const basicCostPerKm = event.pricing[`${group.pricing.license_plate}_basic_km`] || group.pricing.basic_price_km;
-            const fuelCostPerKm = event.pricing[`${group.pricing.license_plate}_fuel_cost_km`] || group.pricing.fuel_cost_km;
+            const basicCostPerKm = pricing[`${group.pricing.license_plate}_basic_km`] || group.pricing.basic_price_km || 0;
+            const fuelCostPerKm = pricing[`${group.pricing.license_plate}_fuel_cost_km`] || group.pricing.fuel_cost_km || 0;
             const discount = getDiscount(driven, "per km");
             const discountedBasicCost = basicCostPerKm * (1 - discount);
             carCost = driven * discountedBasicCost;
