@@ -22,12 +22,13 @@ header {
     position: fixed;
     top: 0;
     width: 100%;
-    z-index: 1000; /* High z-index for header */
-    background-color: #1A2A44; /* Dark blue */
-    padding: 20px;
+    z-index: 1000;
+    background-color: #1A2A44;
+    padding: 20px 10px; /* Adjusted padding to give space on sides */
     display: flex;
     justify-content: space-between;
     align-items: center;
+    box-sizing: border-box; /* Ensures padding doesn’t push content out */
 }
 
 .logo img {
@@ -37,10 +38,13 @@ header {
 .main-nav {
     display: flex;
     gap: 10px;
+    overflow-x: auto; /* Allows horizontal scrolling if buttons overflow */
+    white-space: nowrap; /* Keeps buttons in a single line */
+    padding-right: 10px; /* Adds space on the right */
 }
 
 .main-nav button {
-    background-color: #FF6666; /* Updated light red */
+    background-color: #FF6666;
     color: #FFFFFF;
     border: none;
     padding: 10px 20px;
@@ -48,6 +52,7 @@ header {
     font-size: 16px;
     cursor: pointer;
     transition: background-color 0.3s ease;
+    min-width: 100px; /* Ensures buttons don’t get too small */
 }
 
 .main-nav button:hover {
