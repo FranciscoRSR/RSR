@@ -390,9 +390,9 @@ function addSelectedClients() {
     selectedClients.forEach(selectedClientName => {
         const client = clients.find(c => `${c.name} ${c.surname}` === selectedClientName);
         if (client && !event.participants.some(p => `${p.client.name} ${p.client.surname}` === selectedClientName)) {
-            const carsPerDay = Array(event.days.length).fill([]);
+            const carsPerDay = Array(event.days.length).fill([]); // Empty arrays for each day
             const packagesPerDay = Array(event.days.length).fill([]);
-            const drivenPerDay = Array(event.days.length).fill([]);
+            const drivenPerDay = Array(event.days.length).fill([]); // Empty arrays, to be filled later
             const paidPerDay = Array(event.days.length).fill(0);
 
             event.participants.push({
@@ -408,7 +408,6 @@ function addSelectedClients() {
             selectedClients.delete(selectedClientName);
         }
     });
-
     updateParticipantsTable();
     document.getElementById('clientSearch').value = '';
     document.getElementById('clientMultiSelect').style.display = 'none';
@@ -461,7 +460,10 @@ function saveAllParticipants() {
     event.participants.forEach((participant, participantIndex) => {
         const carsPerDay = [];
         const packagesPerDay = [];
-        const drivenPerDay = participant.driven_per_day || Array(event.days.length).fill([]);
+        // Ensure driven_per_day is initialized as an array of arrays
+        if (!participant.driven_per_day || !Array.isArray(participant.driven_per_day)) {
+            participant.driven_per_day = Array(event.days.length).fill([]);
+        }
 
         event.days.forEach((day, dayIndex) => {
             const carSelections = document.querySelectorAll(`#participantsTableBody tr:nth-child(${participantIndex + 1}) td:nth-child(${dayIndex + 2}) .car-selection`);
@@ -481,18 +483,23 @@ function saveAllParticipants() {
 
             carsPerDay.push(dayCars);
             packagesPerDay.push(dayPackages);
-            drivenPerDay[dayIndex] = drivenPerDay[dayIndex].slice(0, dayCars.length);
+            // Initialize driven_per_day for this day if not enough values
+            if (!participant.driven_per_day[dayIndex] || participant.driven_per_day[dayIndex].length < dayCars.length) {
+                participant.driven_per_day[dayIndex] = Array(dayCars.length).fill(0);
+            } else {
+                participant.driven_per_day[dayIndex] = participant.driven_per_day[dayIndex].slice(0, dayCars.length);
+            }
         });
 
         participant.car_per_day = carsPerDay;
         participant.package_per_day = packagesPerDay;
-        participant.driven_per_day = drivenPerDay;
     });
 
     event.participants = event.participants.filter(p => p.car_per_day.some(day => day.length > 0));
     saveData();
     updateParticipantsTable();
     alert('Participants saved successfully!');
+    editEvent(currentEventIndex);
 }
 
 function cancelEditEvent() {
@@ -1024,16 +1031,21 @@ function calculateCircuitCredit(participant, event, trackDayIndices, circuit) {
 
     const usageGroups = {};
     trackDayIndices.forEach(dayIndex => {
-        participant.car_per_day[dayIndex].forEach((carPlate, carIdx) => {
+        // Ensure car_per_day and driven_per_day are defined for this day
+        const carsForDay = participant.car_per_day[dayIndex] || [];
+        const drivenForDay = (participant.driven_per_day && participant.driven_per_day[dayIndex]) || [];
+
+        carsForDay.forEach((carPlate, carIdx) => {
             if (carPlate) {
                 const car = cars.find(c => c.license_plate === carPlate);
                 const modelKey = `${car.brand} ${car.model}`;
-                const packageType = participant.package_per_day[dayIndex][carIdx] || 'basic';
+                const packageType = (participant.package_per_day[dayIndex] && participant.package_per_day[dayIndex][carIdx]) || 'basic';
                 const key = `${modelKey}_${packageType}_${circuit.name}`;
                 if (!usageGroups[key]) {
                     usageGroups[key] = { driven: 0, pricing: car, package: packageType };
                 }
-                usageGroups[key].driven += participant.driven_per_day[dayIndex][carIdx] || 0;
+                // Safely access driven_per_day with a fallback to 0
+                usageGroups[key].driven += drivenForDay[carIdx] || 0;
             }
         });
     });
