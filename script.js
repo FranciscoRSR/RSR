@@ -74,8 +74,10 @@ function loadData() {
 window.onload = function() {
     if (db) {
         loadData();
+        showSection('home'); // Show home screen by default
     } else {
         console.error("Firebase not ready on page load.");
+        showSection('home'); // Show home screen even if Firebase fails
     }
 };
 
