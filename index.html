@@ -12,7 +12,9 @@
     <body>
         <header>
             <div class="logo">
-                <img src="https://rsrbooking.com/assets/rsr-nurburg+spa-logo.svg" alt="RSR Logo">
+                <a href="#" onclick="showSection('home'); return false;">
+                    <img src="https://rsrbooking.com/assets/rsr-nurburg+spa-logo.svg" alt="RSR Logo">
+                </a>
             </div>
             <nav class="main-nav">
                 <button onclick="showSection('events')">Events</button>
@@ -24,6 +26,10 @@
         </header>
     
         <main>
+            <div id="home" class="section">
+                <h1>Welcome to RSR Event Management</h1>
+                <p>This system is designed to manage all RSR events, providing comprehensive tools to oversee clients, cars, circuits, and event overviews efficiently.</p>
+            </div>
             <!-- Events Section -->
             <div id="events" class="section">
                 <h1>Events</h1>
