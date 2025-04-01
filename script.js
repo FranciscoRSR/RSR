@@ -251,6 +251,8 @@ function editEvent(index) {
     updateParticipantsTable(); // Initialize participants table if needed
 }
 
+
+
 function toggleParticipantsSection() {
     hideAllEditForms();
     const section = document.getElementById('participantsSection');
@@ -852,8 +854,11 @@ function saveParticipant(clientIndex) {
 }
 
 function enterDrivenData() {
+    Load ();
+    hideAllEditForms();
     const form = document.getElementById('enterDrivenDataForm');
     form.style.display = 'block';
+    
     // Populate the drivenDay dropdown if not already done
     const drivenDaySelect = document.getElementById('drivenDay');
     if (drivenDaySelect.options.length === 0) {
@@ -871,8 +876,6 @@ function enterDrivenData() {
 }
 
 function updateDrivenDataClients() {
-    loadData();
-    hideAllEditForms();
     const event = events[currentEventIndex];
     const drivenDaySelect = document.getElementById('drivenDay');
     const drivenDataInputs = document.getElementById('drivenDataInputs');
@@ -966,6 +969,7 @@ function saveDrivenData() {
             }
         });
     });
+
     saveData();
     document.getElementById('enterDrivenDataForm').style.display = 'none';
     updateCarsTable();
