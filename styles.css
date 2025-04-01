@@ -1,0 +1,550 @@
+styles.css
+
+/* Reset and Base Styles */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: 'Arial', sans-serif;
+    background-color: #F5F6F5; /* Light gray background like RSRBooking */
+    color: #1A2A44; /* Dark blue text */
+    line-height: 1.6;
+    min-height: 100vh; /* Ensures body takes full viewport height */
+    display: flex;
+    flex-direction: column;
+}
+
+/* Header */
+header {
+    position: fixed;
+    top: 0;
+    width: 100%;
+    z-index: 1000; /* High z-index for header */
+    background-color: #1A2A44; /* Dark blue */
+    padding: 20px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.logo img {
+    height: 50px; /* Adjust based on logo size */
+}
+
+.main-nav {
+    display: flex;
+    gap: 10px;
+}
+
+.main-nav button {
+    background-color: #FF6666; /* Updated light red */
+    color: #FFFFFF;
+    border: none;
+    padding: 10px 20px;
+    border-radius: 5px;
+    font-size: 16px;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+}
+
+.main-nav button:hover {
+    background-color: #FF4D4D; /* Updated darker red for hover */
+}
+
+/* Main Content */
+main {
+    max-width: 1400px;
+    margin: 0 auto;
+    padding: 20px;
+    flex: 1;
+    margin-top: 90px; /* Add margin to push content below the fixed header (adjust based on header height) */
+}
+
+.section {
+    display: none;
+    background-color: #FFFFFF;
+    padding: 30px;
+    border-radius: 10px;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+    margin-bottom: 20px;
+}
+
+.section.active {
+    display: block;
+}
+
+/* Typography */
+h1, h2, h3, h4 {
+    color: #1A2A44; /* Dark blue */
+    margin-bottom: 15px;
+}
+
+h1 {
+    font-size: 32px;
+    text-align: center;
+}
+
+#editEventDays {
+    font-size: 16px;
+    line-height: 0.5em;
+    margin: -1;
+    padding: 0;
+}
+
+/* Buttons */
+button {
+    background-color: #FF6666; /* Updated light red */
+    color: #FFFFFF;
+    border: none;
+    padding: 10px 20px;
+    border-radius: 5px;
+    cursor: pointer;
+    font-size: 14px;
+    transition: background-color 0.3s ease;
+}
+
+button:hover {
+    background-color: #FF4D4D; /* Updated darker red for hover */
+}
+
+.add-car-btn {
+    background-color: #FF9999;
+    padding: 6px 12px;
+    font-size: 12px;
+}
+
+.add-car-btn:hover {
+    background-color: #FF4D4D; /* Updated darker red for hover */
+}
+
+.remove-car-btn {
+    background-color: #FF6666;
+    padding: 6px 12px;
+    font-size: 12px;
+}
+
+.remove-car-btn:hover {
+    background-color: #FF4D4D;
+}
+
+/* Forms */
+label {
+    color: #1A2A44;
+    display: block;
+    margin: 10px 0 5px;
+}
+
+input, select {
+    width: 100%;
+    max-width: 300px;
+    padding: 8px;
+    border: 1px solid #DDDDDD;
+    border-radius: 5px;
+    font-size: 14px;
+}
+
+input[type="date"] {
+    cursor: pointer;
+    /* Add any additional styling if needed */
+}
+
+.form-buttons {
+    display: flex;
+    gap: 10px;
+    margin-top: 20px;
+    margin-bottom: 20px;
+}
+
+/* Tables */
+.table-container {
+    overflow-x: auto; /* Enables horizontal scrolling for wide tables */
+    margin-top: 20px;
+    border-radius: 10px;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+}
+
+table {
+    width: 100%;
+    border-collapse: separate;
+    border-spacing: 0;
+    background-color: #FFFFFF;
+    border: 1px solid #E0E0E0; /* Subtle border */
+}
+
+th, td {
+    padding: 12px 15px; /* More padding for readability */
+    text-align: left;
+    border-bottom: 1px solid #E0E0E0;
+}
+
+th {
+    background-color: #1A2A44; /* Dark blue headers */
+    color: #FFFFFF;
+    font-weight: 600;
+    text-transform: uppercase; /* Professional touch */
+    letter-spacing: 0.5px;
+    position: sticky; /* Keeps headers visible when scrolling */
+    top: 0;
+    z-index: 10;
+}
+
+td {
+    color: #1A2A44;
+}
+
+tr:nth-child(even) {
+    background-color: #F9FAFB; /* Lighter gray for even rows */
+}
+
+tr:hover {
+    background-color: #F1F5F9; /* Subtle hover effect */
+}
+
+/* Modal */
+.modal {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.6);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 2000;
+}
+
+.modal-content {
+    background-color: #FFFFFF;
+    padding: 30px;
+    border-radius: 10px;
+    max-width: 90%;
+    max-height: 90vh;
+    overflow-y: auto;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+}
+
+/* Footer */
+footer {
+    background-color: #1A2A44;
+    color: #FFFFFF;
+    text-align: center;
+    padding: 15px;
+    width: 100%; /* Ensures footer spans full width */
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+
+    .car-selection-group {
+        display: block;
+    }
+    .car-selection {
+        margin-bottom: 10px;
+    }
+    .multi-select-dropdown {
+        position: static;
+        width: 100%;
+        max-width: none;
+    }
+    .table-container {
+        border-radius: 0; /* Simplify on small screens */
+    }
+
+    table, thead, tbody, th, td, tr {
+        display: block;
+    }
+
+    th, td {
+        width: 100%;
+        text-align: right;
+        position: relative;
+        padding-left: 50%;
+        box-sizing: border-box;
+    }
+
+    th::before, td::before {
+        content: attr(data-label);
+        position: absolute;
+        left: 10px;
+        width: 45%;
+        padding-right: 10px;
+        font-weight: bold;
+        text-align: left;
+        color: #1A2A44;
+    }
+
+    th {
+        background-color: #1A2A44;
+        color: #FFFFFF;
+    }
+    
+    header {
+        flex-direction: column;
+        padding: 15px;
+    }
+
+    .main-nav {
+        flex-wrap: wrap;
+        justify-content: center;
+    }
+
+    .main-nav button {
+        margin: 5px;
+    }
+
+    .section {
+        padding: 20px;
+    }
+
+    table, thead, tbody, th, td, tr {
+        display: block;
+    }
+
+    th, td {
+        width: 100%;
+        text-align: right;
+        position: relative;
+        padding-left: 50%;
+    }
+
+    th::before, td::before {
+        content: attr(data-label);
+        position: absolute;
+        left: 10px;
+        width: 45%;
+        padding-right: 10px;
+        font-weight: bold;
+        text-align: left;
+    }
+}
+
+.car-btn {
+    background-color: #E0E0E0; /* Light gray for unselected state */
+    color: #1A2A44; /* Dark blue text */
+    border: 2px solid #1A2A44; /* Dark blue border */
+    padding: 10px 15px;
+    border-radius: 5px;
+    cursor: pointer;
+    font-size: 14px;
+    margin: 5px; /* Space between buttons */
+    transition: all 0.3s ease; /* Smooth transition */
+}
+
+.car-btn:hover {
+    background-color: #CCCCCC; /* Slightly darker gray on hover */
+}
+
+.car-btn.selected {
+    background-color: #FF4D4D; /* Updated darker red for selected state */
+    color: #FFFFFF;
+    border-color: #FF3333; /* Even darker border for contrast */
+    box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.2);
+}
+
+.model-group {
+    margin-bottom: 15px;
+}
+
+.model-btn {
+    background-color: #E0E0E0;
+    color: #1A2A44;
+    border: 2px solid #1A2A44;
+    padding: 10px 15px;
+    border-radius: 5px;
+    cursor: pointer;
+    font-size: 14px;
+    margin-right: 10px;
+    transition: all 0.3s ease;
+}
+
+.model-btn:hover {
+    background-color: #CCCCCC;
+}
+
+.model-btn.selected {
+    background-color: #FF8080;
+    color: #FFFFFF;
+    border-color: #FF6666;
+    box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.2);
+}
+
+.model-btn.partial {
+    background-color: #FF9999; /* Keep this lighter for partial selection */
+    color: #1A2A44;
+    border-color: #FF6666; /* Updated to match new base color */
+}
+
+.expand-btn {
+    background-color: #E0E0E0;
+    color: #1A2A44;
+    border: 1px solid #1A2A44;
+    padding: 5px 10px;
+    border-radius: 5px;
+    cursor: pointer;
+    font-size: 12px;
+    transition: all 0.3s ease;
+}
+
+.expand-btn:hover {
+    background-color: #CCCCCC;
+}
+
+.plates-list {
+    margin-left: 20px;
+    margin-top: 5px;
+}
+
+.plate-btn {
+    background-color: #F0F0F0;
+    color: #1A2A44;
+    border: 1px solid #1A2A44;
+    padding: 5px 10px;
+    border-radius: 5px;
+    cursor: pointer;
+    font-size: 12px;
+    margin: 5px;
+    transition: all 0.3s ease;
+    display: inline-block;
+}
+
+.plate-btn:hover {
+    background-color: #D9D9D9;
+}
+
+.plate-btn.selected {
+    background-color: #FF6666; /* Updated light red */
+    color: #FFFFFF;
+    border-color: #FF4D4D; /* Updated darker red */
+    box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.2);
+}
+
+.select-all-btn {
+    background-color: #E0E0E0;
+    color: #1A2A44;
+    border: 2px solid #1A2A44;
+    padding: 10px 15px;
+    border-radius: 5px;
+    cursor: pointer;
+    font-size: 14px;
+    margin-bottom: 10px;
+    transition: all 0.3s ease;
+}
+
+.select-all-btn:hover {
+    background-color: #CCCCCC;
+}
+
+.select-all-btn.selected {
+    background-color: #FF4D4D; /* Updated darker red */
+    color: #FFFFFF;
+    border-color: #FF3333;
+    box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.2);
+}
+
+.modify-pricing-btn {
+    background-color: #E0E0E0;
+    color: #1A2A44;
+    border: 1px solid #1A2A44;
+    padding: 10px 15px;
+    border-radius: 5px;
+    cursor: pointer;
+    font-size: 14px;
+    margin-top: 10px;
+    transition: all 0.3s ease;
+}
+
+.modify-pricing-btn:hover {
+    background-color: #CCCCCC;
+}
+
+#pricingInputsContainer {
+    margin-top: 15px;
+}
+.participant-add {
+    margin-bottom: 15px;
+    position: relative; /* Already set, ensures dropdown is positioned relative to this */
+}
+
+#clientSearch {
+    padding: 10px;
+    border: 1px solid #DDDDDD;
+    border-radius: 5px;
+    width: 100%;
+    max-width: 300px;
+}
+
+.multi-select-dropdown {
+    position: absolute;
+    top: 100%; /* Aligns the top of the dropdown with the bottom of the input */
+    left: 0;
+    background-color: #FFFFFF;
+    border: 1px solid #DDDDDD;
+    border-radius: 5px;
+    max-height: 200px;
+    overflow-y: auto;
+    width: 100%;
+    max-width: 300px;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+    z-index: 10;
+    display: none; /* Ensure it starts hidden */
+}
+
+.multi-select-dropdown label {
+    display: block;
+    padding: 5px 10px;
+    cursor: pointer;
+}
+
+.multi-select-dropdown label:hover {
+    background-color: #F0F0F0;
+}
+
+.multi-select-dropdown button {
+    width: 100%;
+    padding: 10px;
+    background-color: #4CAF50;
+    color: white;
+    border: none;
+    border-top: 1px solid #DDDDDD;
+    border-radius: 0 0 5px 5px;
+    cursor: pointer;
+}
+
+.multi-select-dropdown button:hover {
+    background-color: #45A049;
+}
+
+header {
+    position: fixed;
+    top: 0;
+    width: 100%;
+    z-index: 1000; /* High z-index for header */
+    background: #fff;
+}
+
+.event-container {
+    margin-top: 60px; /* Space for fixed header */
+    position: relative;
+}
+
+.multi-select-dropdown {
+    position: absolute;
+    top: 100%; /* Below the input */
+    left: 0;
+    width: 300px;
+    max-height: 200px;
+    overflow-y: auto;
+    background: #fff;
+    border: 1px solid #ccc;
+    z-index: 2000; /* Above header */
+    display: none; /* Hidden by default */
+}
+
+#clientSearch {
+    position: relative;
+    width: 300px;
+}
