@@ -854,8 +854,6 @@ function saveParticipant(clientIndex) {
 }
 
 function enterDrivenData() {
-    Load ();
-    hideAllEditForms();
     const form = document.getElementById('enterDrivenDataForm');
     form.style.display = 'block';
     
