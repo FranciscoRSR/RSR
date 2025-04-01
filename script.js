@@ -251,8 +251,6 @@ function editEvent(index) {
     updateParticipantsTable(); // Initialize participants table if needed
 }
 
-
-
 function toggleParticipantsSection() {
     hideAllEditForms();
     const section = document.getElementById('participantsSection');
@@ -854,9 +852,9 @@ function saveParticipant(clientIndex) {
 }
 
 function enterDrivenData() {
+    hideAllEditForms();
     const form = document.getElementById('enterDrivenDataForm');
     form.style.display = 'block';
-    
     // Populate the drivenDay dropdown if not already done
     const drivenDaySelect = document.getElementById('drivenDay');
     if (drivenDaySelect.options.length === 0) {
@@ -874,6 +872,8 @@ function enterDrivenData() {
 }
 
 function updateDrivenDataClients() {
+    loadData();
+    hideAllEditForms();
     const event = events[currentEventIndex];
     const drivenDaySelect = document.getElementById('drivenDay');
     const drivenDataInputs = document.getElementById('drivenDataInputs');
@@ -924,7 +924,7 @@ function updateDrivenDataClients() {
         carsForDay.forEach((carPlate, carIndex) => {
             const car = cars.find(c => c.license_plate === carPlate);
             inputsHTML += `
-                <label>${car ? `${car.brand} ${car.model} (${carPlate})` : carPlate} (${unit}): 
+                <label>${car ? `${car.model} (${carPlate})` : carPlate} (${unit}): 
                     <input type="number" min="0" id="drivenValue_${participantIndex}_${carIndex}" 
                            value="${participant.driven_per_day[dayIndex][carIndex] || 0}">
                 </label><br>
