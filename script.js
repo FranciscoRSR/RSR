@@ -854,9 +854,26 @@ function saveParticipant(clientIndex) {
 }
 
 function enterDrivenData() {
-    console.log('enterDrivenData called, checking DOM for dayDrivenSelector');
-    const daySelectorCheck = document.getElementById('dayDrivenSelector');
-    console.log('dayDrivenSelector element:', daySelectorCheck);
+    const event = events[currentEventIndex];
+    if (!event) {
+        console.error('No current event found');
+        return;
+    }
+
+    let daySelector = document.getElementById('dayDrivenSelector');
+    if (!daySelector) {
+        console.warn('dayDrivenSelector not found, creating it');
+        daySelector = document.createElement('select');
+        daySelector.id = 'dayDrivenSelector';
+        // Append to a specific container or body (adjust as needed)
+        const container = document.getElementById('drivenDataContainer') || document.body;
+        container.appendChild(daySelector);
+    }
+
+    // Populate with event days
+    daySelector.innerHTML = event.days.map((day, i) => `<option value="${i}">${day.date || `Day ${i + 1}`}</option>`).join('');
+    console.log('dayDrivenSelector populated with options:', daySelector.options);
+
     updateDrivenDataClients();
 }
 
@@ -874,7 +891,7 @@ function updateDrivenDataClients() {
     }
 
     const dayIndex = parseInt(daySelector.value);
-    if (isNaN(dayIndex) || dayIndex < 0 || dayIndex >= event.days.length) {
+    if (isNaN(dayIndex) || dayIndex < 0 ||.toolbar-dayIndex >= event.days.length) {
         console.error(`Invalid dayIndex: ${dayIndex}, event.days.length: ${event.days.length}`);
         return;
     }
