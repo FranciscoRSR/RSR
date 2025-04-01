@@ -878,7 +878,7 @@ function updateDrivenDataClients() {
     const drivenDaySelect = document.getElementById('drivenDay');
     const drivenDataInputs = document.getElementById('drivenDataInputs');
     
-    // Check if drivenDay exists and has a value
+    // Check if drivenDay exists
     if (!drivenDaySelect) {
         drivenDataInputs.innerHTML = '<p>Error: Day selector not found.</p>';
         return;
@@ -892,6 +892,10 @@ function updateDrivenDataClients() {
         drivenDataInputs.innerHTML = '<p>Please select a valid day.</p>';
         return;
     }
+
+    // Get the circuit for the selected day
+    const circuit = event.days[dayIndex].circuit;
+    const unit = (circuit && circuit.pricing_type === 'per km') ? 'km' : 'laps';
 
     event.participants.forEach((participant, participantIndex) => {
         const carsForDay = participant.car_per_day[dayIndex] || [];
@@ -914,7 +918,7 @@ function updateDrivenDataClients() {
         carsForDay.forEach((carPlate, carIndex) => {
             const car = cars.find(c => c.license_plate === carPlate);
             inputsHTML += `
-                <label>${car ? `${car.brand} ${car.model} (${carPlate})` : carPlate}: 
+                <label>${car ? `${car.brand} ${car.model} (${carPlate})` : carPlate} (${unit}): 
                     <input type="number" min="0" id="drivenValue_${participantIndex}_${carIndex}" 
                            value="${participant.driven_per_day[dayIndex][carIndex] || 0}">
                 </label><br>
