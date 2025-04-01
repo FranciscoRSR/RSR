@@ -1,4 +1,3 @@
-
 // Firebase Initialization
 const firebaseConfig = {
     apiKey: "AIzaSyCVH9tFfsmm040flswAVgPoXWAqcb_CDqY",
@@ -71,23 +70,14 @@ function loadData() {
     }).catch(error => console.error("Error loading circuits:", error));
 }
 
-// Attach navigation button event listeners
-document.addEventListener('DOMContentLoaded', function() {
-    document.getElementById('eventsBtn').addEventListener('click', () => showSection('events'));
-    document.getElementById('clientsBtn').addEventListener('click', () => showSection('clients'));
-    document.getElementById('carsBtn').addEventListener('click', () => showSection('cars'));
-    document.getElementById('circuitsBtn').addEventListener('click', () => showSection('circuits'));
-    document.getElementById('priceListBtn').addEventListener('click', () => showSection('priceList'));
-});
-
 // Call loadData when the page loads
 window.onload = function() {
     if (db) {
         loadData();
-        showSection('events'); // Default to events section
+        showSection('home'); // Show home screen by default
     } else {
         console.error("Firebase not ready on page load.");
-        showSection('events'); // Show events even if Firebase fails
+        showSection('home'); // Show home screen even if Firebase fails
     }
 };
 
@@ -104,16 +94,12 @@ function isValidDate(year, month, day) {
 // Show a specific section and hide others
 function showSection(sectionId) {
     loadData(); // Ensure latest data is loaded
-    const sections = document.querySelectorAll('.section'); // Assuming sections have a 'section' class
+    const sections = document.querySelectorAll('.section');
     sections.forEach(section => {
         section.style.display = 'none';
     });
     const activeSection = document.getElementById(sectionId);
-    if (activeSection) {
-        activeSection.style.display = 'block';
-    } else {
-        console.error(`Section with ID '${sectionId}' not found.`);
-    }
+    activeSection.style.display = 'block';
 
     if (sectionId === 'events') {
         document.getElementById('eventsControls').style.display = 'block';
@@ -264,6 +250,8 @@ function editEvent(index) {
 
     updateParticipantsTable(); // Initialize participants table if needed
 }
+
+
 
 function toggleParticipantsSection() {
     hideAllEditForms();
@@ -866,9 +854,9 @@ function saveParticipant(clientIndex) {
 }
 
 function enterDrivenData() {
-    hideAllEditForms();
     const form = document.getElementById('enterDrivenDataForm');
     form.style.display = 'block';
+    
     // Populate the drivenDay dropdown if not already done
     const drivenDaySelect = document.getElementById('drivenDay');
     if (drivenDaySelect.options.length === 0) {
@@ -886,7 +874,6 @@ function enterDrivenData() {
 }
 
 function updateDrivenDataClients() {
-    LoadData();
     const event = events[currentEventIndex];
     const drivenDaySelect = document.getElementById('drivenDay');
     const drivenDataInputs = document.getElementById('drivenDataInputs');
@@ -937,7 +924,7 @@ function updateDrivenDataClients() {
         carsForDay.forEach((carPlate, carIndex) => {
             const car = cars.find(c => c.license_plate === carPlate);
             inputsHTML += `
-                <label>${car ? `${car.model} (${carPlate})` : carPlate} (${unit}): 
+                <label>${car ? `${car.brand} ${car.model} (${carPlate})` : carPlate} (${unit}): 
                     <input type="number" min="0" id="drivenValue_${participantIndex}_${carIndex}" 
                            value="${participant.driven_per_day[dayIndex][carIndex] || 0}">
                 </label><br>
@@ -1603,10 +1590,7 @@ function processBalances() {
 
 function saveBalances() {
     const event = events[currentEventIndex];
-    if (!event) {
-        console.error("No event found at currentEventIndex:", currentEventIndex);
-        return;
-    }
+    const uniqueCircuits = [...new Set(event.days.map(day => day.circuit ? day.circuit.name : null))].filter(c => c);
 
     event.participants.forEach((participant, index) => {
         const payment = parseFloat(document.getElementById(`payment_${index}`).value) || 0;
@@ -1616,6 +1600,119 @@ function saveBalances() {
         const paymentObservation = document.getElementById(`paymentObservation_${index}`).value;
 
         if (payment > 0) {
+            let affectedDays;
+            if (paymentCircuit === 'All') {
+                affectedDays = participant.car_per_day.map((dayCars, idx) => dayCars.length > 0 ? idx : -1).filter(idx => idx !== -1);
+            } else {
+                affectedDays = event.days.map((day, idx) => day.circuit && day.circuit.name === paymentCircuit && participant.car_per_day[idx].length > 0 ? idx : -1).filter(idx => idx !== -1);
+            }
+            const paymentPerDay = affectedDays.length > 0 ? payment / affectedDays.length : 0;
+            participant.paid_per_day = participant.paid_per_day.map(( contentiousIssue, dayIndex) => 
+                affectedDays.includes(dayIndex) ? contentiousIssue + paymentPerDay : contentiousIssue
+            );
+
+            let totalCreditUsed = 0;
+            const trackGroups = {};
+            event.days.forEach((day, dayIndex) => {
+                const track = day.circuit ? day.circuit.name : 'N/A';
+                if (!trackGroups[track]) trackGroups[track] = [];
+                trackGroups[track].push(dayIndex);
+            });
+
+            event.days.forEach((day, dayIndex) => {
+    const circuit = day.circuit;
+    let dayCost = 0;
+    if (circuit) {
+        const trackDayIndices = trackGroups[circuit.name];
+        const modelGroups = {};
+        trackDayIndices.forEach(dIdx => {
+            participant.car_per_day[dIdx].forEach((carPlate, carIdx) => {
+                if (carPlate) {
+                    const car = cars.find(c => c.license_plate === carPlate);
+                    if (!car) {
+                        console.warn(`Car with license plate ${carPlate} not found in cars list.`);
+                        return; // Skip if car not found
+                    }
+                    const modelKey = `${car.brand} ${car.model}`;
+                    if (!modelGroups[modelKey]) {
+                        modelGroups[modelKey] = { driven: 0, package: participant.package_per_day[dIdx][carIdx], pricing: car };
+                    }
+                    modelGroups[modelKey].driven += participant.driven_per_day[dIdx][carIdx] || 0;
+                }
+            });
+        });
+
+        const dailyModelGroups = {};
+        participant.car_per_day[dayIndex].forEach((carPlate, carIdx) => {
+            if (carPlate) {
+                const car = cars.find(c => c.license_plate === carPlate);
+                if (!car) return; // Skip if car not found
+                const modelKey = `${car.brand} ${car.model}`;
+                if (!dailyModelGroups[modelKey]) {
+                    dailyModelGroups[modelKey] = { driven: modelGroups[modelKey].driven, package: participant.package_per_day[dayIndex][carIdx], pricing: car };
+                }
+            }
+        });
+
+        for (const model in dailyModelGroups) {
+            const group = dailyModelGroups[model];
+            const driven = group.driven;
+            const packageType = group.package || "basic"; // Default to "basic" if undefined
+            let carCost = 0;
+
+            // Ensure event.pricing exists, initialize if not
+            if (!event.pricing) {
+                event.pricing = {};
+                console.warn(`Pricing object missing for event ${event.name}. Using default car pricing.`);
+            }
+
+            if (circuit.pricing_type === "per lap") {
+                const basicCostPerLap = event.pricing[`${group.pricing.license_plate}_basic_lap`] !== undefined 
+                    ? event.pricing[`${group.pricing.license_plate}_basic_lap`] 
+                    : (group.pricing.basic_price_lap || 0);
+                const allIncCostPerLap = event.pricing[`${group.pricing.license_plate}_all_inc_lap`] !== undefined 
+                    ? event.pricing[`${group.pricing.license_plate}_all_inc_lap`] 
+                    : (group.pricing.all_inc_price_lap || 0);
+                if (basicCostPerLap === 0) {
+                    console.warn(`No basic price per lap set for ${group.pricing.license_plate} in event ${event.name}.`);
+                }
+                const discount = getDiscount(driven, "per lap");
+                const discountedBasicCost = basicCostPerLap * (1 - discount);
+                carCost = driven * discountedBasicCost;
+                if (packageType === "all_inc") {
+                    carCost += driven * allIncCostPerLap;
+                } else if (packageType === "fuel_inc") {
+                    carCost += driven * (allIncCostPerLap - 35); // Assuming fuel-inc adjustment
+                }
+            } else {
+                const basicCostPerKm = event.pricing[`${group.pricing.license_plate}_basic_km`] !== undefined 
+                    ? event.pricing[`${group.pricing.license_plate}_basic_km`] 
+                    : (group.pricing.basic_price_km || 0);
+                const fuelCostPerKm = event.pricing[`${group.pricing.license_plate}_fuel_cost_km`] !== undefined 
+                    ? event.pricing[`${group.pricing.license_plate}_fuel_cost_km`] 
+                    : (group.pricing.fuel_cost_km || 0);
+                if (basicCostPerKm === 0) {
+                    console.warn(`No basic price per km set for ${group.pricing.license_plate} in event ${event.name}.`);
+                }
+                const discount = getDiscount(driven, "per km");
+                const discountedBasicCost = basicCostPerKm * (1 - discount);
+                carCost = driven * discountedBasicCost;
+                if (packageType === "fuel_inc" || packageType === "all_inc") {
+                    let baseFuelCost = circuit.name === "Spa" || circuit.name === "Nürburgring GP Track" 
+                        ? Math.round(fuelCostPerKm * 10) / 10 
+                        : Math.round((fuelCostPerKm * 1.3) * 10) / 10;
+                    carCost += driven * baseFuelCost;
+                }
+            }
+            dayCost += carCost / trackDayIndices.length;
+        }
+    }
+    totalCreditUsed += dayCost;
+});
+
+            const totalPaid = participant.paid_per_day.reduce((sum, paid) => sum + paid, 0);
+            participant.paid_status = totalPaid >= totalCreditUsed;
+
             participant.payment_details = participant.payment_details || [];
             participant.payment_details.push({ 
                 amount: payment, 
@@ -1624,11 +1721,6 @@ function saveBalances() {
                 date: paymentDate || new Date().toISOString().split('T')[0], 
                 observation: paymentObservation || null 
             });
-            const daysParticipated = participant.car_per_day.filter(day => day.length > 0).length;
-            const paymentPerDay = daysParticipated > 0 ? payment / daysParticipated : 0;
-            participant.paid_per_day = participant.paid_per_day.map((paid, dayIdx) => 
-                participant.car_per_day[dayIdx].length > 0 ? paid + paymentPerDay : paid
-            );
         }
     });
 
