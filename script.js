@@ -95,12 +95,16 @@ function isValidDate(year, month, day) {
 // Show a specific section and hide others
 function showSection(sectionId) {
     loadData(); // Ensure latest data is loaded
-    const sections = document.querySelectorAll('.section');
+    const sections = document.querySelectorAll('.section'); // Assuming sections have a 'section' class
     sections.forEach(section => {
         section.style.display = 'none';
     });
     const activeSection = document.getElementById(sectionId);
-    activeSection.style.display = 'block';
+    if (activeSection) {
+        activeSection.style.display = 'block';
+    } else {
+        console.error(`Section with ID '${sectionId}' not found.`);
+    }
 
     if (sectionId === 'events') {
         document.getElementById('eventsControls').style.display = 'block';
