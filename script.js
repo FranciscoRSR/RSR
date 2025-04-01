@@ -895,6 +895,7 @@ function updateDrivenDataClients() {
 
     // Define circuit first
     const circuit = event.days[dayIndex].circuit;
+    // Define unit after circuit
     const unit = circuit ? (circuit.pricing_type === 'per km' ? 'km' : 'laps') : 'laps';
     
     // Warn if no circuit is set
@@ -932,6 +933,7 @@ function updateDrivenDataClients() {
         drivenDataInputs.innerHTML += inputsHTML;
     });
 }
+
 function saveDrivenData() {
     const event = events[currentEventIndex];
     const dayIndex = parseInt(document.getElementById('drivenDay').value);
