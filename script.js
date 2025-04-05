@@ -177,7 +177,7 @@ function addEvent() {
         participants: [],
         cars_assigned: {},
         available_cars: [],
-        pricing: {} // Initialize empty pricing object
+        pricing: {}
     });
     saveData();
     document.getElementById('addEventForm').style.display = 'none';
@@ -635,12 +635,6 @@ function saveCircuits() {
 function assignCarsPricing() {
     hideAllEditForms();
     const event = events[currentEventIndex];
-    
-    // Initialize pricing object if it doesn't exist
-    if (!event.pricing) {
-        event.pricing = {};
-    }
-    
     const availableCarsSelection = document.getElementById('availableCarsSelection');
     availableCarsSelection.innerHTML = `
         <h4>Select Available Cars by Model:</h4>
@@ -683,31 +677,15 @@ function assignCarsPricing() {
         <h4>Pricing Options:</h4>
         <button class="modify-pricing-btn" onclick="togglePricingInputs()">Modify Pricing</button>
         <div id="pricingInputsContainer" style="display: none;">
-            ${cars.map(car => {
-                // Safely get pricing values with fallbacks
-                const basicPriceLap = event.pricing[`${car.license_plate}_basic_lap`] !== undefined 
-                    ? event.pricing[`${car.license_plate}_basic_lap`] 
-                    : car.basic_price_lap;
-                const allIncPriceLap = event.pricing[`${car.license_plate}_all_inc_lap`] !== undefined 
-                    ? event.pricing[`${car.license_plate}_all_inc_lap`] 
-                    : car.all_inc_price_lap;
-                const basicPriceKm = event.pricing[`${car.license_plate}_basic_km`] !== undefined 
-                    ? event.pricing[`${car.license_plate}_basic_km`] 
-                    : car.basic_price_km;
-                const fuelCostKm = event.pricing[`${car.license_plate}_fuel_cost_km`] !== undefined 
-                    ? event.pricing[`${car.license_plate}_fuel_cost_km`] 
-                    : car.fuel_cost_km;
-
-                return `
-                    <div id="pricing_${car.license_plate}" style="display: ${event.available_cars.includes(car.license_plate) ? 'block' : 'none'};">
-                        <h5>${car.brand} ${car.model} (${car.license_plate})</h5>
-                        <label>Basic Price per Lap: <input type="number" id="basicPriceLap_${car.license_plate}" value="${basicPriceLap || ''}" step="0.01"></label><br>
-                        <label>All-Inc Price per Lap: <input type="number" id="allIncPriceLap_${car.license_plate}" value="${allIncPriceLap || ''}" step="0.01"></label><br>
-                        <label>Basic Price per km: <input type="number" id="basicPriceKm_${car.license_plate}" value="${basicPriceKm || ''}" step="0.01"></label><br>
-                        <label>Fuel Cost per km: <input type="number" id="fuelCostKm_${car.license_plate}" value="${fuelCostKm || ''}" step="0.01"></label><br>
-                    </div>
-                `;
-            }).join('')}
+            ${cars.map(car => `
+                <div id="pricing_${car.license_plate}" style="display: ${event.available_cars.includes(car.license_plate) ? 'block' : 'none'};">
+                    <h5>${car.brand} ${car.model} (${car.license_plate})</h5>
+                    <label>Basic Price per Lap: <input type="number" id="basicPriceLap_${car.license_plate}" value="${event.pricing[`${car.license_plate}_basic_lap`] || ''}" step="0.01"></label><br>
+                    <label>All-Inc Price per Lap: <input type="number" id="allIncPriceLap_${car.license_plate}" value="${event.pricing[`${car.license_plate}_all_inc_lap`] || ''}" step="0.01"></label><br>
+                    <label>Basic Price per km: <input type="number" id="basicPriceKm_${car.license_plate}" value="${event.pricing[`${car.license_plate}_basic_km`] || ''}" step="0.01"></label><br>
+                    <label>Fuel Cost per km: <input type="number" id="fuelCostKm_${car.license_plate}" value="${event.pricing[`${car.license_plate}_fuel_cost_km`] || ''}" step="0.01"></label><br>
+                </div>
+            `).join('')}
         </div>
     `;
 
@@ -800,30 +778,30 @@ function toggleExpandModel(model) {
     platesList.style.display = platesList.style.display === 'none' ? 'block' : 'none';
 }
 
+/* function toggleCarSelection(licensePlate) {
+    const button = document.getElementById(`carBtn_${licensePlate}`);
+    const pricingDiv = document.getElementById(`pricing_${licensePlate}`);
+    
+    // Toggle the 'selected' class
+    button.classList.toggle('selected');
+    
+    // Show or hide pricing inputs based on selection
+    pricingDiv.style.display = button.classList.contains('selected') ? 'block' : 'none';
+} */
+
 function saveCarsPricing() {
     const event = events[currentEventIndex];
     const availableCars = [];
-    
-    // Initialize pricing object if it doesn't exist
-    if (!event.pricing) {
-        event.pricing = {};
-    }
+    event.pricing = {};
 
     cars.forEach(car => {
         const button = document.getElementById(`plateBtn_${car.license_plate}`);
         if (button && button.classList.contains('selected')) {
             availableCars.push(car.license_plate);
-            
-            // Get values from inputs, fall back to car defaults if empty
-            const basicPriceLapInput = document.getElementById(`basicPriceLap_${car.license_plate}`);
-            const allIncPriceLapInput = document.getElementById(`allIncPriceLap_${car.license_plate}`);
-            const basicPriceKmInput = document.getElementById(`basicPriceKm_${car.license_plate}`);
-            const fuelCostKmInput = document.getElementById(`fuelCostKm_${car.license_plate}`);
-
-            const basicPriceLap = basicPriceLapInput.value !== '' ? parseFloat(basicPriceLapInput.value) : car.basic_price_lap;
-            const allIncPriceLap = allIncPriceLapInput.value !== '' ? parseFloat(allIncPriceLapInput.value) : car.all_inc_price_lap;
-            const basicPriceKm = basicPriceKmInput.value !== '' ? parseFloat(basicPriceKmInput.value) : car.basic_price_km;
-            const fuelCostKm = fuelCostKmInput.value !== '' ? parseFloat(fuelCostKmInput.value) : car.fuel_cost_km;
+            const basicPriceLap = parseFloat(document.getElementById(`basicPriceLap_${car.license_plate}`).value);
+            const allIncPriceLap = parseFloat(document.getElementById(`allIncPriceLap_${car.license_plate}`).value);
+            const basicPriceKm = parseFloat(document.getElementById(`basicPriceKm_${car.license_plate}`).value);
+            const fuelCostKm = parseFloat(document.getElementById(`fuelCostKm_${car.license_plate}`).value);
 
             if (!isNaN(basicPriceLap)) event.pricing[`${car.license_plate}_basic_lap`] = basicPriceLap;
             if (!isNaN(allIncPriceLap)) event.pricing[`${car.license_plate}_all_inc_lap`] = allIncPriceLap;
