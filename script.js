@@ -55,6 +55,8 @@ function saveData() {
     circuitsRef.set(circuits).catch(error => console.error("Error saving circuits:", error));
 }
 
+
+
 // Load data from Firebase
 function loadData() {
     if (!db) {
@@ -360,6 +362,14 @@ document.addEventListener('click', function(event) {
     }
 });
 
+document.addEventListener('DOMContentLoaded', function() {
+    document.getElementById('eventsBtn').addEventListener('click', () => showSection('events'));
+    document.getElementById('clientsBtn').addEventListener('click', () => showSection('clients'));
+    document.getElementById('carsBtn').addEventListener('click', () => showSection('cars'));
+    document.getElementById('circuitsBtn').addEventListener('click', () => showSection('circuits'));
+    document.getElementById('priceListBtn').addEventListener('click', () => showSection('priceList'));
+});
+
 document.getElementById('clientSearch').addEventListener('click', function(e) {
     const dropdown = document.getElementById('clientMultiSelect');
     const clientOptions = document.getElementById('clientOptions');
@@ -375,6 +385,20 @@ document.getElementById('clientSearch').addEventListener('click', function(e) {
     dropdown.style.display = 'block';
     e.stopPropagation(); // Prevent click from bubbling up and triggering the outside click handler immediately
 });
+
+function showForm(formId, hideTableId = null) {
+    document.getElementById(formId).classList.remove('hidden');
+    if (hideTableId) {
+        document.getElementById(hideTableId).classList.add('hidden');
+    }
+}
+
+function hideForm(formId, showTableId = null) {
+    document.getElementById(formId).classList.add('hidden');
+    if (showTableId) {
+        document.getElementById(showTableId).classList.remove('hidden');
+    }
+}
 
 // Add selected clients from multi-select
 function addSelectedClients() {
