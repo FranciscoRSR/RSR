@@ -9,28 +9,30 @@ styles.css
 
 body {
     font-family: 'Arial', sans-serif;
-    background-color: #F5F6F5; /* Light gray background like RSRBooking */
-    color: #1A2A44; /* Dark blue text */
+    background-color: #F5F6F5;
+    color: #1A2A44;
     line-height: 1.6;
-    min-height: 100vh; /* Ensures body takes full viewport height */
+    min-height: 100vh;
     display: flex;
     flex-direction: column;
+    padding-top: 90px; /* Add this to prevent header overlap */
 }
 
 /* Header */
 header {
     position: fixed;
-    flex-direction: column;
     top: 0;
     width: 100%;
+    height: 90px; /* Explicit height */
     z-index: 1000;
     background-color: #1A2A44;
-    background: #fff;
     padding: 20px 10px;
     display: flex;
     justify-content: space-between;
     align-items: center;
-    box-sizing: border-box; /* Ensures padding doesn’t push content out */
+    box-sizing: border-box;
+}
+
 
 .logo img {
     height: 50px; /* Adjust based on logo size */
@@ -62,17 +64,19 @@ header {
 
 /* Main Content */
 main {
+    flex: 1;
+    width: 100%;
     max-width: 1400px;
     margin: 0 auto;
     padding: 20px;
-    flex: 1;
-    margin-top: 90px; /* Add margin to push content below the fixed header (adjust based on header height) */
+    position: relative;
+    z-index: 1;
 }
 
 .section {
     display: none;
-    padding: 20px;
     background-color: #FFFFFF;
+    padding: 30px;
     border-radius: 10px;
     box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
     margin-bottom: 20px;
@@ -103,13 +107,14 @@ h1 {
 /* Buttons */
 button {
     background-color: #FF6666; /* Updated light red */
+    min-height: 40px;
     color: #FFFFFF;
     border: none;
-    padding: 10px 20px;
+    padding: 8px 16px;
     border-radius: 5px;
     cursor: pointer;
     font-size: 14px;
-    transition: background-color 0.3s ease;
+    transition: all 0.3s ease;
 }
 
 button:hover {
@@ -143,13 +148,15 @@ label {
     margin: 10px 0 5px;
 }
 
-input, select {
+input, select, textarea {
     width: 100%;
-    max-width: 300px;
-    padding: 8px;
-    border: 1px solid #DDDDDD;
-    border-radius: 5px;
+    max-width: 400px;
+    padding: 10px;
+    border: 1px solid #DDD;
+    border-radius: 4px;
     font-size: 14px;
+    margin-bottom: 15px;
+    box-sizing: border-box;
 }
 
 input[type="date"] {
@@ -167,17 +174,16 @@ input[type="date"] {
 /* Tables */
 .table-container {
     overflow-x: auto;
-    margin-top: 20px;
-    border-radius: 10px;
-    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+    -webkit-overflow-scrolling: touch;
+    margin: 20px 0;
+    border-radius: 8px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
 }
 
 table {
-    width: 100%;
+    min-width: 100%;
     border-collapse: separate;
     border-spacing: 0;
-    background-color: #FFFFFF;
-    border: 1px solid #E0E0E0; /* Subtle border */
 }
 
 th, td {
@@ -216,7 +222,7 @@ tr:hover {
     left: 0;
     width: 100%;
     height: 100%;
-    background-color: rgba(0, 0, 0, 0.6);
+    background-color: rgba(0, 0, 0, 0.7);
     display: flex;
     justify-content: center;
     align-items: center;
@@ -224,13 +230,50 @@ tr:hover {
 }
 
 .modal-content {
-    background-color: #FFFFFF;
-    padding: 30px;
-    border-radius: 10px;
-    max-width: 90%;
-    max-height: 90vh;
+    background-color: white;
+    padding: 25px;
+    border-radius: 8px;
+    width: 90%;
+    max-width: 800px;
+    max-height: 80vh;
     overflow-y: auto;
-    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.25);
+}
+
+.modal-buttons {
+    margin-top: 20px;
+    text-align: right;
+}
+
+.modal-content table {
+    width: 100%;
+    margin: 20px 0;
+}
+
+.modal-content button {
+    margin: 10px 5px;
+}
+
+#viewPaymentsContent table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 15px 0;
+}
+
+#viewPaymentsContent th, 
+#viewPaymentsContent td {
+    padding: 10px;
+    border: 1px solid #ddd;
+    text-align: left;
+}
+
+#viewPaymentsContent th {
+    background-color: #1A2A44;
+    color: white;
+}
+
+#viewPaymentsContent tr:nth-child(even) {
+    background-color: #f2f2f2;
 }
 
 /* Footer */
@@ -245,6 +288,26 @@ footer {
 /* Responsive Design */
 @media (max-width: 768px) {
 
+    body {
+        padding-top: 120px; /* Increased for mobile header */
+    }
+
+    header {
+        height: auto;
+        flex-direction: column;
+        padding: 15px;
+    }
+
+    .main-nav {
+        flex-wrap: wrap;
+        justify-content: center;
+        margin-top: 10px;
+    }
+
+    .section, .form-container {
+        padding: 15px;
+    }
+
     .car-selection-group {
         display: block;
     }
@@ -256,10 +319,7 @@ footer {
         width: 100%;
         max-width: none;
     }
-    .table-container {
-        border-radius: 0; /* Simplify on small screens */
-    }
-
+    
     table, thead, tbody, th, td, tr {
         display: block;
     }
@@ -482,22 +542,6 @@ footer {
     max-width: 300px;
 }
 
-.multi-select-dropdown {
-    position: absolute;
-    top: 100%; /* Aligns the top of the dropdown with the bottom of the input */
-    left: 0;
-    background-color: #FFFFFF;
-    border: 1px solid #DDDDDD;
-    border-radius: 5px;
-    max-height: 200px;
-    overflow-y: auto;
-    width: 100%;
-    max-width: 300px;
-    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
-    z-index: 10;
-    display: none; /* Ensure it starts hidden */
-}
-
 .multi-select-dropdown label {
     display: block;
     padding: 5px 10px;
@@ -531,15 +575,18 @@ footer {
 
 .multi-select-dropdown {
     position: absolute;
-    top: 100%; /* Below the input */
+    top: 100%; /* Aligns the top of the dropdown with the bottom of the input */
     left: 0;
-    width: 300px;
+    background-color: #FFFFFF;
+    border: 1px solid #DDDDDD;
+    border-radius: 5px;
     max-height: 200px;
     overflow-y: auto;
-    background: #fff;
-    border: 1px solid #ccc;
-    z-index: 2000; /* Above header */
-    display: none; /* Hidden by default */
+    width: 100%;
+    max-width: 300px;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+    z-index: 10001;
+    display: none; /* Ensure it starts hidden */
 }
 
 #clientSearch {
@@ -553,4 +600,17 @@ footer {
 
 .table-visible {
     display: table;
+}
+
+.form-container {
+    display: none;
+    background-color: #FFFFFF;
+    padding: 20px;
+    border-radius: 8px;
+    margin-top: 20px;
+    border: 1px solid #E0E0E0;
+}
+
+.form-container.active {
+    display: block;
 }

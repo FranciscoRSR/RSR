@@ -42,7 +42,7 @@
                             <tbody></tbody>
                         </table>
                     </div>
-                <div id="addEventForm" style="display: none;">
+                <div id="addEventForm" class="form-container">
                     <h2>Add Event</h2>
                     <div class="form-buttons">
                         <button onclick="addEvent()">Save</button>
@@ -53,7 +53,7 @@
                     <div id="eventDaysInputs"></div>
                 </div>
     
-                <div id="editEventForm" style="display: none;">
+                <div id="editEventForm" class="form-container">
                     <h2>Edit Event: <span id="editEventName"></span></h2>
                     <div id="editEventDays"></div>
                     <div class="form-buttons">
@@ -78,12 +78,12 @@
                         </div>
                         <div class="form-buttons">
                             <button onclick="saveAllParticipants()">Save Participants</button>
-                            <button onclick="toggleParticipantsSection()">Close</button>
+                            <button onclick="hideAllEditForms()">Close</button>
                         </div>
                     </div>
                 </div>
     
-                <div id="editEventDetailsForm" style="display: none;">
+                <div id="editEventDetailsForm" class="form-container">
                     <h2>Edit Event Details</h2>
                     <div class="form-buttons">
                         <button onclick="saveEventDetails()">Save</button>
@@ -93,7 +93,7 @@
                     <div id="editEventDaysInputs"></div>
                 </div>
     
-                <div id="assignCircuitsForm" style="display: none;">
+                <div id="assignCircuitsForm" class="form-container">
                     <h2>Assign Circuits</h2>
                     <div class="form-buttons">
                         <button onclick="saveCircuits()">Save</button>
@@ -102,7 +102,7 @@
                     <div id="circuitAssignments"></div>
                 </div>
     
-                <div id="assignCarsPricingForm" style="display: none;">
+                <div id="assignCarsPricingForm" class="form-container">
                     <h2>Assign Cars & Pricing</h2>
                     <div class="form-buttons">
                         <button onclick="saveCarsPricing()">Save</button>
@@ -112,7 +112,7 @@
                     <div id="carsPricingInputs"></div>
                 </div>
     
-                <div id="editParticipantForm" class="section" style="display: none;">
+                <div id="editParticipantForm" class="section" class="form-container">
                     <h2>Edit Participant: <span id="editParticipantName"></span></h2>
                         <div class="table-container">
                             <table>
@@ -124,7 +124,7 @@
                     <button onclick="cancelAddParticipant()">Cancel</button>
                 </div>
     
-                <div id="enterDrivenDataForm" style="display: none;">
+                <div id="enterDrivenDataForm" class="form-container">
                     <h2>Enter Driven Data</h2>
                     <div class="form-buttons">
                         <button onclick="saveDrivenData()">Save</button>
@@ -134,7 +134,7 @@
                     <div id="drivenDataInputs"></div>
                 </div>
     
-                <div id="clientPackageForm" style="display: none;">
+                <div id="clientPackageForm" class="form-container">
                     <h2>Client Package Payments</h2>
                     <div class="form-buttons">
                         <button onclick="saveClientPackage()">Save</button>
@@ -148,7 +148,7 @@
                         </div>
                 </div>
     
-                <div id="overviewForm" style="display: none;">
+                <div id="overviewForm" class="form-container">
                     <h2>Event Overview</h2>
                     <div class="form-buttons">
                         <button onclick="generateEventOverviewPDF()">Download PDF</button>
@@ -162,7 +162,7 @@
                         </div>
                 </div>
     
-                <div id="processBalancesForm" style="display: none;">
+                <div id="processBalancesForm" class="form-container">
                     <h2>Add Payments</h2>
                     <div class="form-buttons">
                         <button onclick="saveBalances()">Save Payments</button>
@@ -190,7 +190,7 @@
                             <tbody></tbody>
                         </table>
                     </div>
-                <div id="addClientForm" style="display: none;">
+                <div id="addClientForm" class="form-container">
                     <h2>Add Client</h2>
                     <div class="form-buttons">
                         <button onclick="addClient()">Save</button>
@@ -202,7 +202,7 @@
                     <label>Country: <input type="text" id="clientCountry"></label>
                 </div>
     
-                <div id="editClientForm" style="display: none;">
+                <div id="editClientForm" class="form-container">
                     <h2>Edit Client</h2>
                     <div class="form-buttons">
                         <button onclick="saveEditedClient()">Save</button>
@@ -214,7 +214,7 @@
                     <label>Country: <input type="text" id="editClientCountry"></label>
                 </div>
     
-                <div id="importClientsForm" style="display: none;">
+                <div id="importClientsForm" class="form-container">
                     <h2>Import Clients</h2>
                     <div class="form-buttons">
                         <button onclick="importClients()">Import</button>
@@ -237,7 +237,7 @@
                             <tbody></tbody>
                         </table>
                     </div>
-                <div id="addCarForm" style="display: none;">
+                <div id="addCarForm" sclass="form-container">
                     <h2>Add Car</h2>
                     <div class="form-buttons">
                         <button onclick="addCar()">Save</button>
@@ -252,7 +252,7 @@
                     <label>Fuel Cost per km: <input type="number" id="carFuelCostKm" step="0.01"></label>
                 </div>
     
-                <div id="editCarForm" style="display: none;">
+                <div id="editCarForm" class="form-container">
                     <h2>Edit Car</h2>
                     <div class="form-buttons">
                         <button onclick="saveEditedCar()">Save</button>
@@ -267,7 +267,7 @@
                     <label>Fuel Cost per km: <input type="number" id="editCarFuelCostKm" step="0.01"></label>
                 </div>
     
-                <div id="importCarsForm" style="display: none;">
+                <div id="importCarsForm" class="form-container">
                     <h2>Import Cars</h2>
                     <div class="form-buttons">
                         <button onclick="importCars()">Import</button>
@@ -290,7 +290,7 @@
                             <tbody></tbody>
                         </table>
                     </div>
-                <div id="addCircuitForm" style="display: none;">
+                <div id="addCircuitForm" class="form-container">
                     <h2>Add Circuit</h2>
                     <div class="form-buttons">
                         <button onclick="addCircuit()">Save</button>
@@ -307,7 +307,7 @@
                     </label>
                 </div>
     
-                <div id="editCircuitForm" style="display: none;">
+                <div id="editCircuitForm" class="form-container">
                     <h2>Edit Circuit</h2>
                     <div class="form-buttons">
                         <button onclick="saveEditedCircuit()">Save</button>
@@ -324,7 +324,7 @@
                     </label>
                 </div>
     
-                <div id="importCircuitsForm" style="display: none;">
+                <div id="importCircuitsForm" class="form-container">
                     <h2>Import Circuits</h2>
                     <div class="form-buttons">
                         <button onclick="importCircuits()">Import</button>
@@ -354,5 +354,13 @@
         <script src="https://www.gstatic.com/firebasejs/11.6.0/firebase-app-compat.js"></script>
         <script src="https://www.gstatic.com/firebasejs/11.6.0/firebase-database-compat.js"></script>
         <script src="script.js"></script>
+        <div id="viewPaymentsModal" class="modal" style="display: none;">
+            <div class="modal-content">
+                <div id="viewPaymentsContent"></div>
+                <div class="modal-buttons">
+                    <button onclick="document.getElementById('viewPaymentsModal').style.display = 'none'">Close</button>
+                </div>
+            </div>
+        </div>
 </body>
 </html>

@@ -101,28 +101,15 @@ function showSection(sectionId) {
         section.classList.remove('active');
     });
     
-    // Show the selected section
+    // Show requested section
     document.getElementById(sectionId).classList.add('active');
     
-    // Load appropriate data
-    switch(sectionId) {
-        case 'events':
-            updateEventsTable();
-            break;
-        case 'clients':
-            updateClientsTable();
-            break;
-        case 'cars':
-            updateCarsTable();
-            break;
-        case 'circuits':
-            updateCircuitsTable();
-            break;
-        case 'priceList':
-            updatePriceListTable();
-            break;
+    // Special case for Price List section
+    if (sectionId === 'priceList') {
+        updatePriceListTable();
     }
 }
+
 
 // --- Events Section ---
 
@@ -177,7 +164,7 @@ function addEvent() {
         participants: [],
         cars_assigned: {},
         available_cars: [],
-        pricing: {}
+        pricing: {} // Initialize empty pricing object
     });
     saveData();
     document.getElementById('addEventForm').style.display = 'none';
@@ -386,18 +373,12 @@ document.getElementById('clientSearch').addEventListener('click', function(e) {
     e.stopPropagation(); // Prevent click from bubbling up and triggering the outside click handler immediately
 });
 
-function showForm(formId, hideTableId = null) {
-    document.getElementById(formId).classList.remove('hidden');
-    if (hideTableId) {
-        document.getElementById(hideTableId).classList.add('hidden');
-    }
+function showForm(formId) {
+    document.getElementById(formId).classList.add('active');
 }
 
-function hideForm(formId, showTableId = null) {
-    document.getElementById(formId).classList.add('hidden');
-    if (showTableId) {
-        document.getElementById(showTableId).classList.remove('hidden');
-    }
+function hideForm(formId) {
+    document.getElementById(formId).classList.remove('active');
 }
 
 // Add selected clients from multi-select
@@ -635,6 +616,12 @@ function saveCircuits() {
 function assignCarsPricing() {
     hideAllEditForms();
     const event = events[currentEventIndex];
+    
+    // Initialize pricing object if it doesn't exist
+    if (!event.pricing) {
+        event.pricing = {};
+    }
+    
     const availableCarsSelection = document.getElementById('availableCarsSelection');
     availableCarsSelection.innerHTML = `
         <h4>Select Available Cars by Model:</h4>
@@ -677,15 +664,31 @@ function assignCarsPricing() {
         <h4>Pricing Options:</h4>
         <button class="modify-pricing-btn" onclick="togglePricingInputs()">Modify Pricing</button>
         <div id="pricingInputsContainer" style="display: none;">
-            ${cars.map(car => `
-                <div id="pricing_${car.license_plate}" style="display: ${event.available_cars.includes(car.license_plate) ? 'block' : 'none'};">
-                    <h5>${car.brand} ${car.model} (${car.license_plate})</h5>
-                    <label>Basic Price per Lap: <input type="number" id="basicPriceLap_${car.license_plate}" value="${event.pricing[`${car.license_plate}_basic_lap`] || ''}" step="0.01"></label><br>
-                    <label>All-Inc Price per Lap: <input type="number" id="allIncPriceLap_${car.license_plate}" value="${event.pricing[`${car.license_plate}_all_inc_lap`] || ''}" step="0.01"></label><br>
-                    <label>Basic Price per km: <input type="number" id="basicPriceKm_${car.license_plate}" value="${event.pricing[`${car.license_plate}_basic_km`] || ''}" step="0.01"></label><br>
-                    <label>Fuel Cost per km: <input type="number" id="fuelCostKm_${car.license_plate}" value="${event.pricing[`${car.license_plate}_fuel_cost_km`] || ''}" step="0.01"></label><br>
-                </div>
-            `).join('')}
+            ${cars.map(car => {
+                // Safely get pricing values with fallbacks
+                const basicPriceLap = event.pricing[`${car.license_plate}_basic_lap`] !== undefined 
+                    ? event.pricing[`${car.license_plate}_basic_lap`] 
+                    : car.basic_price_lap;
+                const allIncPriceLap = event.pricing[`${car.license_plate}_all_inc_lap`] !== undefined 
+                    ? event.pricing[`${car.license_plate}_all_inc_lap`] 
+                    : car.all_inc_price_lap;
+                const basicPriceKm = event.pricing[`${car.license_plate}_basic_km`] !== undefined 
+                    ? event.pricing[`${car.license_plate}_basic_km`] 
+                    : car.basic_price_km;
+                const fuelCostKm = event.pricing[`${car.license_plate}_fuel_cost_km`] !== undefined 
+                    ? event.pricing[`${car.license_plate}_fuel_cost_km`] 
+                    : car.fuel_cost_km;
+
+                return `
+                    <div id="pricing_${car.license_plate}" style="display: ${event.available_cars.includes(car.license_plate) ? 'block' : 'none'};">
+                        <h5>${car.brand} ${car.model} (${car.license_plate})</h5>
+                        <label>Basic Price per Lap: <input type="number" id="basicPriceLap_${car.license_plate}" value="${basicPriceLap || ''}" step="0.01"></label><br>
+                        <label>All-Inc Price per Lap: <input type="number" id="allIncPriceLap_${car.license_plate}" value="${allIncPriceLap || ''}" step="0.01"></label><br>
+                        <label>Basic Price per km: <input type="number" id="basicPriceKm_${car.license_plate}" value="${basicPriceKm || ''}" step="0.01"></label><br>
+                        <label>Fuel Cost per km: <input type="number" id="fuelCostKm_${car.license_plate}" value="${fuelCostKm || ''}" step="0.01"></label><br>
+                    </div>
+                `;
+            }).join('')}
         </div>
     `;
 
@@ -778,30 +781,30 @@ function toggleExpandModel(model) {
     platesList.style.display = platesList.style.display === 'none' ? 'block' : 'none';
 }
 
-/* function toggleCarSelection(licensePlate) {
-    const button = document.getElementById(`carBtn_${licensePlate}`);
-    const pricingDiv = document.getElementById(`pricing_${licensePlate}`);
-    
-    // Toggle the 'selected' class
-    button.classList.toggle('selected');
-    
-    // Show or hide pricing inputs based on selection
-    pricingDiv.style.display = button.classList.contains('selected') ? 'block' : 'none';
-} */
-
 function saveCarsPricing() {
     const event = events[currentEventIndex];
     const availableCars = [];
-    event.pricing = {};
+    
+    // Initialize pricing object if it doesn't exist
+    if (!event.pricing) {
+        event.pricing = {};
+    }
 
     cars.forEach(car => {
         const button = document.getElementById(`plateBtn_${car.license_plate}`);
         if (button && button.classList.contains('selected')) {
             availableCars.push(car.license_plate);
-            const basicPriceLap = parseFloat(document.getElementById(`basicPriceLap_${car.license_plate}`).value);
-            const allIncPriceLap = parseFloat(document.getElementById(`allIncPriceLap_${car.license_plate}`).value);
-            const basicPriceKm = parseFloat(document.getElementById(`basicPriceKm_${car.license_plate}`).value);
-            const fuelCostKm = parseFloat(document.getElementById(`fuelCostKm_${car.license_plate}`).value);
+            
+            // Get values from inputs, fall back to car defaults if empty
+            const basicPriceLapInput = document.getElementById(`basicPriceLap_${car.license_plate}`);
+            const allIncPriceLapInput = document.getElementById(`allIncPriceLap_${car.license_plate}`);
+            const basicPriceKmInput = document.getElementById(`basicPriceKm_${car.license_plate}`);
+            const fuelCostKmInput = document.getElementById(`fuelCostKm_${car.license_plate}`);
+
+            const basicPriceLap = basicPriceLapInput.value !== '' ? parseFloat(basicPriceLapInput.value) : car.basic_price_lap;
+            const allIncPriceLap = allIncPriceLapInput.value !== '' ? parseFloat(allIncPriceLapInput.value) : car.all_inc_price_lap;
+            const basicPriceKm = basicPriceKmInput.value !== '' ? parseFloat(basicPriceKmInput.value) : car.basic_price_km;
+            const fuelCostKm = fuelCostKmInput.value !== '' ? parseFloat(fuelCostKmInput.value) : car.fuel_cost_km;
 
             if (!isNaN(basicPriceLap)) event.pricing[`${car.license_plate}_basic_lap`] = basicPriceLap;
             if (!isNaN(allIncPriceLap)) event.pricing[`${car.license_plate}_all_inc_lap`] = allIncPriceLap;
@@ -870,6 +873,7 @@ function saveParticipant(clientIndex) {
 }
 
 function enterDrivenData() {
+    hideAllEditForms();
     const form = document.getElementById('enterDrivenDataForm');
     form.style.display = 'block';
     
@@ -1080,6 +1084,30 @@ function saveClientPackage() {
     saveData();
     document.getElementById('clientPackageForm').style.display = 'none';
     editEvent(currentEventIndex);
+}
+
+function calculateTotalCreditUsed(participant, event) {
+    let totalCreditUsed = 0;
+    const circuitGroups = {};
+    
+    // Group days by circuit
+    event.days.forEach((day, dayIndex) => {
+        if (day.circuit) {
+            const circuitName = day.circuit.name;
+            if (!circuitGroups[circuitName]) {
+                circuitGroups[circuitName] = [];
+            }
+            circuitGroups[circuitName].push(dayIndex);
+        }
+    });
+    
+    // Calculate credit used for each circuit
+    for (const circuitName in circuitGroups) {
+        const circuit = event.days[circuitGroups[circuitName][0]].circuit;
+        totalCreditUsed += calculateCircuitCredit(participant, event, circuitGroups[circuitName], circuit);
+    }
+    
+    return totalCreditUsed;
 }
 
 function calculateCircuitCredit(participant, event, trackDayIndices, circuit) {
@@ -1742,7 +1770,7 @@ function saveBalances() {
 
     saveData();
     document.getElementById('processBalancesForm').style.display = 'none';
-    viewEvent(currentEventIndex);
+    hideAllEditForms();
 }
 
 function viewAndEditPayments(participantIndex) {
@@ -1753,29 +1781,31 @@ function viewAndEditPayments(participantIndex) {
     let paymentHTML = `<h3>Payments for ${participant.client.name} ${participant.client.surname}</h3>`;
     paymentHTML += '<table><thead><tr><th>Type</th><th>Amount</th><th>Circuit</th><th>Method</th><th>Date</th><th>Observation</th><th>Actions</th></tr></thead><tbody>';
 
+    // Add package payments
     uniqueCircuits.forEach(circuit => {
         const clientPackagePaid = participant.package_payment && participant.package_payment[circuit] || 0;
         if (clientPackagePaid > 0) {
             paymentHTML += `
                 <tr>
                     <td>Package Payment</td>
-                    <td>€${Math.round(clientPackagePaid)}</td> <!-- Non-editable -->
+                    <td>€${Math.round(clientPackagePaid)}</td>
                     <td>${circuit}</td>
                     <td>N/A</td>
                     <td>N/A</td>
                     <td>Initial package payment</td>
-                    <td></td> <!-- No actions for package payment -->
+                    <td></td>
                 </tr>
             `;
         }
     });
 
-    if (participant.payment_details) {
+    // Add extra payments
+    if (participant.payment_details && participant.payment_details.length > 0) {
         participant.payment_details.forEach((payment, paymentIdx) => {
             paymentHTML += `
                 <tr>
                     <td>Extra Payment</td>
-                    <td><input type="number" value="${Math.round(payment.amount)}" id="extraAmount_${paymentIdx}" step="0.01"></td>
+                    <td><input type="number" value="${payment.amount.toFixed(2)}" id="extraAmount_${paymentIdx}" step="0.01"></td>
                     <td>
                         <select id="extraCircuit_${paymentIdx}">
                             <option value="All" ${payment.circuit === 'All' ? 'selected' : ''}>All</option>
@@ -1802,18 +1832,12 @@ function viewAndEditPayments(participantIndex) {
     }
 
     paymentHTML += '</tbody></table>';
-    paymentHTML += '<button onclick="document.getElementById(\'viewPaymentsForm\').style.display = \'none\';">Close</button>';
 
-    let viewPaymentsForm = document.getElementById('viewPaymentsForm');
-    if (!viewPaymentsForm) {
-        viewPaymentsForm = document.createElement('div');
-        viewPaymentsForm.id = 'viewPaymentsForm';
-        viewPaymentsForm.className = 'section';
-        viewPaymentsForm.style.display = 'none';
-        document.body.appendChild(viewPaymentsForm);
-    }
-    viewPaymentsForm.innerHTML = paymentHTML;
-    viewPaymentsForm.style.display = 'block';
+    // Insert the HTML into the modal
+    document.getElementById('viewPaymentsContent').innerHTML = paymentHTML;
+    
+    // Show the modal
+    document.getElementById('viewPaymentsModal').style.display = 'flex';
 }
 
 function savePaymentEdit(participantIndex, type, identifier) {
@@ -1857,12 +1881,27 @@ function deletePayment(participantIndex, paymentIdx) {
     const event = events[currentEventIndex];
     const participant = event.participants[participantIndex];
     const payment = participant.payment_details[paymentIdx];
-    const daysParticipated = participant.car_per_day.filter(dayCars => dayCars.length > 0).length;
-    const paymentPerDay = daysParticipated > 0 ? payment.amount / daysParticipated : 0;
-    participant.paid_per_day = participant.paid_per_day.map((paid, dayIndex) => 
-        participant.car_per_day[dayIndex].length > 0 ? paid - paymentPerDay : paid
-    );
+    
+    // Remove the payment amount from the participant's paid_per_day
+    const daysParticipated = participant.car_per_day
+        .map((_, dayIndex) => participant.car_per_day[dayIndex].length > 0 ? dayIndex : -1)
+        .filter(idx => idx !== -1);
+    
+    const paymentPerDay = daysParticipated.length > 0 ? payment.amount / daysParticipated.length : 0;
+    
+    // Deduct the payment from paid_per_day for each participated day
+    daysParticipated.forEach(dayIndex => {
+        participant.paid_per_day[dayIndex] = Math.max(0, (participant.paid_per_day[dayIndex] || 0) - paymentPerDay);
+    });
+    
+    // Remove the payment from payment_details
     participant.payment_details.splice(paymentIdx, 1);
+    
+    // Recalculate paid_status
+    const totalPaid = participant.paid_per_day.reduce((sum, paid) => sum + paid, 0);
+    const totalCreditUsed = calculateTotalCreditUsed(participant, event);
+    participant.paid_status = totalPaid >= totalCreditUsed;
+    
     saveData();
     viewAndEditPayments(participantIndex);
 }
