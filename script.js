@@ -1448,6 +1448,7 @@ function generateEventOverviewPDF() {
     const { jsPDF } = window.jspdf;
     const doc = new jsPDF({ orientation: 'landscape' });
 
+    // First page (unchanged)
     doc.setFontSize(16);
     doc.text(`Event Overview - ${event.name}`, 14, 20);
 
@@ -1573,7 +1574,7 @@ function generateEventOverviewPDF() {
         body: body,
         theme: 'grid',
         styles: { fontSize: 8, cellPadding: 2 },
-        headStyles: { fillColor: [26, 42, 68] }, // Default, overridden by didParseCell
+        headStyles: { fillColor: [26, 42, 68] },
         didParseCell: function(data) {
             if (data.section === 'head') {
                 const circuitIndex = Object.keys(circuitGroups).findIndex(name => 
@@ -1585,17 +1586,16 @@ function generateEventOverviewPDF() {
                 } else if (data.row.index === 0 && data.cell.text[0] === 'Summary') {
                     data.cell.styles.fillColor = [211, 211, 211];
                 } else if (data.row.index === 1) {
-                    // Apply color to subheaders based on their position
-                    let colIdx = 1; // Start after Customer column
+                    let colIdx = 1;
                     Object.entries(circuitGroups).forEach(([circuitName], idx) => {
-                        const totalCols = headers[0][idx + 1].colSpan; // +1 to skip Customer
+                        const totalCols = headers[0][idx + 1].colSpan;
                         if (data.column.index >= colIdx && data.column.index < colIdx + totalCols) {
                             data.cell.styles.fillColor = circuitColors[circuitName] || [Math.min(200, 150 + idx * 20), 200, 200];
                         }
                         colIdx += totalCols;
                     });
                     if (data.column.index >= colIdx) {
-                        data.cell.styles.fillColor = [211, 211, 211]; // Summary subheaders
+                        data.cell.styles.fillColor = [211, 211, 211];
                     }
                 }
             }
@@ -1604,13 +1604,11 @@ function generateEventOverviewPDF() {
             if (data.section === 'head' && data.row.index === 0) {
                 const circuitIndex = Object.keys(circuitGroups).findIndex(name => data.cell.text[0] === name);
                 if (circuitIndex >= 0 && circuitIndex < Object.keys(circuitGroups).length - 1) {
-                    // Draw vertical line between circuits
                     const x = data.cell.x + data.cell.width;
-                    doc.setDrawColor(0); // Black
+                    doc.setDrawColor(0);
                     doc.setLineWidth(0.5);
-                    doc.line(x, data.cell.y, x, data.cell.y + data.cell.height * 2); // Span both header rows
+                    doc.line(x, data.cell.y, x, data.cell.y + data.cell.height * 2);
                 } else if (data.cell.text[0] === 'Summary') {
-                    // Draw line before Summary
                     const x = data.cell.x;
                     doc.setDrawColor(0);
                     doc.setLineWidth(0.5);
@@ -1621,6 +1619,119 @@ function generateEventOverviewPDF() {
         columnStyles: columnStyles,
         margin: { top: 25, left: 5, right: 5, bottom: 10 }
     });
+
+// Add second page with payment details (optimized width and margins)
+doc.addPage('portrait');
+doc.setFontSize(14);
+doc.text(`Payment Details - ${event.name}`, 10, 10); // Adjusted position for narrow margin
+
+// Very narrow margins (5mm)
+const margin = 5;
+const pageWidth = doc.internal.pageSize.width - margin * 2;
+
+// Prepare payment details table
+let paymentData = [];
+let totalPayments = 0;
+
+// Process payments (same as before)
+event.participants.forEach(participant => {
+    const clientName = `${participant.client.name} ${participant.client.surname}`;
+
+    // Package payments
+    if (participant.package_payment) {
+        Object.entries(participant.package_payment).forEach(([circuit, amount]) => {
+            if (amount !== 0) {
+                paymentData.push([
+                    clientName,
+                    `€${Math.round(amount)}`,
+                    'Package',
+                    circuit,
+                    '',
+                    'Initial package'
+                ]);
+                totalPayments += amount;
+            }
+        });
+    }
+
+    // Extra payments
+    if (participant.payment_details?.length > 0) {
+        participant.payment_details.forEach(payment => {
+            paymentData.push([
+                clientName,
+                `€${Math.round(payment.amount)}`,
+                payment.method,
+                payment.circuit || 'All',
+                payment.date,
+                payment.observation || ''
+            ]);
+            totalPayments += payment.amount;
+        });
+    }
+});
+
+// Column width distribution (using nearly full page width)
+const colWidths = {
+    0: pageWidth * 0.25, // Customer (25%)
+    1: pageWidth * 0.15, // Amount (15%)
+    2: pageWidth * 0.12, // Type (12%)
+    3: pageWidth * 0.15, // Circuit (15%)
+    4: pageWidth * 0.13, // Date (13%)
+    5: pageWidth * 0.20  // Observation (20%)
+};
+
+doc.autoTable({
+    startY: 15,
+    head: [['Customer', 'Amount', 'Type', 'Circuit', 'Date', 'Observation']],
+    body: paymentData,
+    theme: 'grid',
+    styles: { 
+        fontSize: 7,  // Smaller font to fit more
+        cellPadding: 1.5, // Tighter padding
+        overflow: 'linebreak',
+        minCellHeight: 5
+    },
+    headStyles: { 
+        fillColor: [26, 42, 68],
+        fontSize: 8,
+        cellPadding: 2
+    },
+    columnStyles: colWidths,
+    margin: { 
+        top: margin, 
+        left: margin, 
+        right: margin,
+        bottom: margin
+    },
+    willDrawCell: function(data) {
+        // Highlight negative amounts in red
+        if (data.column.index === 1 && data.section === 'body') {
+            const amount = parseFloat(data.cell.text[0].replace('€', '').replace(',', ''));
+            if (amount < 0) {
+                doc.setFillColor(255, 153, 153);
+                doc.rect(data.cell.x, data.cell.y, data.cell.width, data.cell.height, 'F');
+                doc.setTextColor(0, 0, 0);
+            }
+        }
+    },
+    didDrawPage: function(data) {
+        // Add total at bottom with red background if negative
+        if (data.pageCount === data.pageNumber) {
+            const totalY = doc.internal.pageSize.height - margin;
+            const totalText = `Total Payments: €${Math.round(totalPayments)}`;
+            
+            if (totalPayments < 0) {
+                const textWidth = doc.getStringUnitWidth(totalText) * doc.internal.getFontSize() / doc.internal.scaleFactor;
+                doc.setFillColor(255, 153, 153);
+                doc.rect(margin, totalY - 6, textWidth + 4, 6, 'F');
+            }
+            
+            doc.setTextColor(0, 0, 0);
+            doc.setFontSize(9);
+            doc.text(totalText, margin, totalY);
+        }
+    }
+});
 
     doc.save(`Event_Overview_${event.name}.pdf`);
 }
@@ -1633,7 +1744,7 @@ function formatDate(dateString) {
     return `${String(date.getDate()).padStart(2, '0')}/${String(date.getMonth() + 1).padStart(2, '0')}`;
 }
 
-function processBalances() {
+    function processBalances() {
     hideAllEditForms();
     const event = events[currentEventIndex];
     const header = document.getElementById('balancesTableHeader');
@@ -1718,7 +1829,7 @@ function processBalances() {
             <td>€${Math.round(totalCreditUsed)}</td>
             <td>€${Math.round(totalPaid)}</td>
             <td style="background-color: ${totalBalance < 0 ? '#FF9999' : 'inherit'}">€${totalBalance}</td>
-            <td><input type="number" id="payment_${index}" step="0.01" value="0"></td>
+            <td><input type="number" id="payment_${index}" step="0.01" value="0"></td>  <!-- Allow any number (positive or negative) -->
             <td>
                 <select id="paymentCircuit_${index}">
                     ${hasMultipleCircuits 
@@ -1732,6 +1843,7 @@ function processBalances() {
                     <option value="Credit Card">Credit Card</option>
                     <option value="Bank Transfer">Bank Transfer</option>
                     <option value="OBS">OBS</option>
+                    <option value="Refund">Refund</option>  <!-- Added refund option -->
                 </select>
             </td>
             <td><input type="date" id="paymentDate_${index}"></td>
@@ -1750,13 +1862,13 @@ function saveBalances() {
     const uniqueCircuits = [...new Set(event.days.map(day => day.circuit ? day.circuit.name : null))].filter(c => c);
 
     event.participants.forEach((participant, index) => {
-        const payment = parseFloat(document.getElementById(`payment_${index}`).value) || 0;
+        const payment = parseFloat(document.getElementById(`payment_${index}`).value) || 0;  // This will now accept negative values
         const paymentCircuit = document.getElementById(`paymentCircuit_${index}`).value;
         const paymentMethod = document.getElementById(`paymentMethod_${index}`).value;
         const paymentDate = document.getElementById(`paymentDate_${index}`).value;
         const paymentObservation = document.getElementById(`paymentObservation_${index}`).value;
 
-        if (payment > 0) {
+        if (payment !== 0) {  // Changed from payment > 0 to payment !== 0 to accept negative payments
             let affectedDays;
             if (paymentCircuit === 'All') {
                 affectedDays = participant.car_per_day.map((dayCars, idx) => dayCars.length > 0 ? idx : -1).filter(idx => idx !== -1);
@@ -1764,111 +1876,9 @@ function saveBalances() {
                 affectedDays = event.days.map((day, idx) => day.circuit && day.circuit.name === paymentCircuit && participant.car_per_day[idx].length > 0 ? idx : -1).filter(idx => idx !== -1);
             }
             const paymentPerDay = affectedDays.length > 0 ? payment / affectedDays.length : 0;
-            participant.paid_per_day = participant.paid_per_day.map(( contentiousIssue, dayIndex) => 
-                affectedDays.includes(dayIndex) ? contentiousIssue + paymentPerDay : contentiousIssue
+            participant.paid_per_day = participant.paid_per_day.map((paid, dayIndex) => 
+                affectedDays.includes(dayIndex) ? paid + paymentPerDay : paid
             );
-
-            let totalCreditUsed = 0;
-            const trackGroups = {};
-            event.days.forEach((day, dayIndex) => {
-                const track = day.circuit ? day.circuit.name : 'N/A';
-                if (!trackGroups[track]) trackGroups[track] = [];
-                trackGroups[track].push(dayIndex);
-            });
-
-            event.days.forEach((day, dayIndex) => {
-    const circuit = day.circuit;
-    let dayCost = 0;
-    if (circuit) {
-        const trackDayIndices = trackGroups[circuit.name];
-        const modelGroups = {};
-        trackDayIndices.forEach(dIdx => {
-            participant.car_per_day[dIdx].forEach((carPlate, carIdx) => {
-                if (carPlate) {
-                    const car = cars.find(c => c.license_plate === carPlate);
-                    if (!car) {
-                        console.warn(`Car with license plate ${carPlate} not found in cars list.`);
-                        return; // Skip if car not found
-                    }
-                    const modelKey = `${car.brand} ${car.model}`;
-                    if (!modelGroups[modelKey]) {
-                        modelGroups[modelKey] = { driven: 0, package: participant.package_per_day[dIdx][carIdx], pricing: car };
-                    }
-                    modelGroups[modelKey].driven += participant.driven_per_day[dIdx][carIdx] || 0;
-                }
-            });
-        });
-
-        const dailyModelGroups = {};
-        participant.car_per_day[dayIndex].forEach((carPlate, carIdx) => {
-            if (carPlate) {
-                const car = cars.find(c => c.license_plate === carPlate);
-                if (!car) return; // Skip if car not found
-                const modelKey = `${car.brand} ${car.model}`;
-                if (!dailyModelGroups[modelKey]) {
-                    dailyModelGroups[modelKey] = { driven: modelGroups[modelKey].driven, package: participant.package_per_day[dayIndex][carIdx], pricing: car };
-                }
-            }
-        });
-
-        for (const model in dailyModelGroups) {
-            const group = dailyModelGroups[model];
-            const driven = group.driven;
-            const packageType = group.package || "basic"; // Default to "basic" if undefined
-            let carCost = 0;
-
-            // Ensure event.pricing exists, initialize if not
-            if (!event.pricing) {
-                event.pricing = {};
-                console.warn(`Pricing object missing for event ${event.name}. Using default car pricing.`);
-            }
-
-            if (circuit.pricing_type === "per lap") {
-                const basicCostPerLap = event.pricing[`${group.pricing.license_plate}_basic_lap`] !== undefined 
-                    ? event.pricing[`${group.pricing.license_plate}_basic_lap`] 
-                    : (group.pricing.basic_price_lap || 0);
-                const allIncCostPerLap = event.pricing[`${group.pricing.license_plate}_all_inc_lap`] !== undefined 
-                    ? event.pricing[`${group.pricing.license_plate}_all_inc_lap`] 
-                    : (group.pricing.all_inc_price_lap || 0);
-                if (basicCostPerLap === 0) {
-                    console.warn(`No basic price per lap set for ${group.pricing.license_plate} in event ${event.name}.`);
-                }
-                const discount = getDiscount(driven, "per lap");
-                const discountedBasicCost = basicCostPerLap * (1 - discount);
-                carCost = driven * discountedBasicCost;
-                if (packageType === "all_inc") {
-                    carCost += driven * allIncCostPerLap;
-                } else if (packageType === "fuel_inc") {
-                    carCost += driven * (allIncCostPerLap - 35); // Assuming fuel-inc adjustment
-                }
-            } else {
-                const basicCostPerKm = event.pricing[`${group.pricing.license_plate}_basic_km`] !== undefined 
-                    ? event.pricing[`${group.pricing.license_plate}_basic_km`] 
-                    : (group.pricing.basic_price_km || 0);
-                const fuelCostPerKm = event.pricing[`${group.pricing.license_plate}_fuel_cost_km`] !== undefined 
-                    ? event.pricing[`${group.pricing.license_plate}_fuel_cost_km`] 
-                    : (group.pricing.fuel_cost_km || 0);
-                if (basicCostPerKm === 0) {
-                    console.warn(`No basic price per km set for ${group.pricing.license_plate} in event ${event.name}.`);
-                }
-                const discount = getDiscount(driven, "per km");
-                const discountedBasicCost = basicCostPerKm * (1 - discount);
-                carCost = driven * discountedBasicCost;
-                if (packageType === "fuel_inc" || packageType === "all_inc") {
-                    let baseFuelCost = circuit.name === "Spa" || circuit.name === "Nürburgring GP Track" 
-                        ? Math.round(fuelCostPerKm * 10) / 10 
-                        : Math.round((fuelCostPerKm * 1.3) * 10) / 10;
-                    carCost += driven * baseFuelCost;
-                }
-            }
-            dayCost += carCost / trackDayIndices.length;
-        }
-    }
-    totalCreditUsed += dayCost;
-});
-
-            const totalPaid = participant.paid_per_day.reduce((sum, paid) => sum + paid, 0);
-            participant.paid_status = totalPaid >= totalCreditUsed;
 
             participant.payment_details = participant.payment_details || [];
             participant.payment_details.push({ 
@@ -1878,6 +1888,11 @@ function saveBalances() {
                 date: paymentDate || new Date().toISOString().split('T')[0], 
                 observation: paymentObservation || null 
             });
+
+            // Recalculate paid_status
+            const totalPaid = participant.paid_per_day.reduce((sum, paid) => sum + paid, 0);
+            const totalCreditUsed = calculateTotalCreditUsed(participant, event);
+            participant.paid_status = totalPaid >= totalCreditUsed;
         }
     });
 
@@ -1897,16 +1912,16 @@ function viewAndEditPayments(participantIndex) {
     // Add package payments
     uniqueCircuits.forEach(circuit => {
         const clientPackagePaid = participant.package_payment && participant.package_payment[circuit] || 0;
-        if (clientPackagePaid > 0) {
+        if (clientPackagePaid !== 0) {  // Changed from > 0 to !== 0 to show negative package payments
             paymentHTML += `
                 <tr>
                     <td>Package Payment</td>
-                    <td>€${Math.round(clientPackagePaid)}</td>
+                    <td><input type="number" value="${clientPackagePaid.toFixed(2)}" id="packagePaid_${circuit}" step="0.01"></td>
                     <td>${circuit}</td>
                     <td>N/A</td>
                     <td>N/A</td>
                     <td>Initial package payment</td>
-                    <td></td>
+                    <td><button onclick="savePaymentEdit(${participantIndex}, 'package', '${circuit}')">Save</button></td>
                 </tr>
             `;
         }
@@ -1931,6 +1946,7 @@ function viewAndEditPayments(participantIndex) {
                             <option value="Credit Card" ${payment.method === 'Credit Card' ? 'selected' : ''}>Credit Card</option>
                             <option value="Bank Transfer" ${payment.method === 'Bank Transfer' ? 'selected' : ''}>Bank Transfer</option>
                             <option value="OBS" ${payment.method === 'OBS' ? 'selected' : ''}>OBS</option>
+                            <option value="Refund" ${payment.method === 'Refund' ? 'selected' : ''}>Refund</option>
                         </select>
                     </td>
                     <td><input type="date" value="${payment.date}" id="extraDate_${paymentIdx}"></td>
@@ -1945,11 +1961,7 @@ function viewAndEditPayments(participantIndex) {
     }
 
     paymentHTML += '</tbody></table>';
-
-    // Insert the HTML into the modal
     document.getElementById('viewPaymentsContent').innerHTML = paymentHTML;
-    
-    // Show the modal
     document.getElementById('viewPaymentsModal').style.display = 'flex';
 }
 
@@ -1969,7 +1981,7 @@ function savePaymentEdit(participantIndex, type, identifier) {
             }
         });
         participant.package_payment = participant.package_payment || {};
-        participant.package_payment[circuit] = newPaid; // Store package payment per circuit
+        participant.package_payment[circuit] = newPaid;
     } else if (type === 'extra') {
         const paymentIdx = identifier;
         const payment = participant.payment_details[paymentIdx];
@@ -1978,13 +1990,12 @@ function savePaymentEdit(participantIndex, type, identifier) {
         payment.method = document.getElementById(`extraMethod_${paymentIdx}`).value;
         payment.date = document.getElementById(`extraDate_${paymentIdx}`).value;
         payment.observation = document.getElementById(`extraObservation_${paymentIdx}`).value || null;
-
-        const daysParticipated = participant.car_per_day.filter(dayCars => dayCars.length > 0).length;
-        const paymentPerDay = daysParticipated > 0 ? payment.amount / daysParticipated : 0;
-        participant.paid_per_day = participant.paid_per_day.map((paid, dayIndex) => 
-            participant.car_per_day[dayIndex].length > 0 ? paid + paymentPerDay : paid
-        );
     }
+
+    // Recalculate paid status
+    const totalPaid = participant.paid_per_day.reduce((sum, paid) => sum + paid, 0);
+    const totalCreditUsed = calculateTotalCreditUsed(participant, event);
+    participant.paid_status = totalPaid >= totalCreditUsed;
 
     saveData();
     viewAndEditPayments(participantIndex);
