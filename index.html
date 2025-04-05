@@ -46,7 +46,7 @@
                     <h2>Add Event</h2>
                     <div class="form-buttons">
                         <button onclick="addEvent()">Save</button>
-                        <button onclick="document.getElementById('addEventForm').style.display = 'none'; document.getElementById('eventsTable').classList.remove('hidden');">Cancel</button>
+                       <button onclick="document.getElementById('addEventForm').style.display='none'; document.getElementById('eventsTable').style.display='table';">Cancel</button>
                     </div>
                     <label>Event Name: <input type="text" id="eventName"></label><br>
                     <label>Number of Days: <input type="number" id="eventDays" min="1"></label><br>
@@ -57,7 +57,7 @@
                     <h2>Edit Event: <span id="editEventName"></span></h2>
                     <div id="editEventDays"></div>
                     <div class="form-buttons">
-                        <button onclick="cancelEditEvent()">Close</button>
+                        <button onclick="document.getElementById('editEventForm').style.display='none'; document.getElementById('eventsTable').style.display='table';">Cancel</button>
                     </div>
                     <div id="eventDetails"></div>
                     <!-- Updated Participant Management Section -->
@@ -194,7 +194,7 @@
                     <h2>Add Client</h2>
                     <div class="form-buttons">
                         <button onclick="addClient()">Save</button>
-                        <button onclick="cancelAddClient()">Cancel</button>
+                        <button onclick="document.getElementById('addClientForm').style.display='none'; document.getElementById('clientsTable').style.display='table';">Cancel</button>
                     </div>
                     <label>Name: <input type="text" id="clientName"></label><br>
                     <label>Surname: <input type="text" id="clientSurname"></label><br>
@@ -206,7 +206,7 @@
                     <h2>Edit Client</h2>
                     <div class="form-buttons">
                         <button onclick="saveEditedClient()">Save</button>
-                        <button onclick="document.getElementById('editClientForm').style.display = 'none'; document.getElementById('clientsTable').classList.remove('hidden');">Cancel</button>
+                        <button onclick="document.getElementById('editClientForm').style.display='none'; document.getElementById('clientsTable').style.display='table';">Cancel</button><button onclick="document.getElementById('editClientForm').style.display = 'none'; document.getElementById('clientsTable').classList.remove('hidden');">Cancel</button>
                     </div>
                     <label>Name: <input type="text" id="editClientName"></label><br>
                     <label>Surname: <input type="text" id="editClientSurname"></label><br>
@@ -241,7 +241,7 @@
                     <h2>Add Car</h2>
                     <div class="form-buttons">
                         <button onclick="addCar()">Save</button>
-                        <button onclick="cancelAddCar()">Cancel</button>
+                        <button onclick="document.getElementById('addCarForm').style.display='none'; document.getElementById('carsTable').style.display='table';">Cancel</button>
                     </div>
                     <label>Brand: <input type="text" id="carBrand"></label><br>
                     <label>Model: <input type="text" id="carModel"></label><br>
@@ -256,7 +256,7 @@
                     <h2>Edit Car</h2>
                     <div class="form-buttons">
                         <button onclick="saveEditedCar()">Save</button>
-                        <button onclick="document.getElementById('editCarForm').style.display = 'none'; document.getElementById('carsTable').classList.remove('hidden');">Cancel</button>
+                        <button onclick="document.getElementById('editCarForm').style.display='none'; document.getElementById('carsTable').style.display='table';">Cancel</button><button onclick="document.getElementById('editCarForm').style.display = 'none'; document.getElementById('carsTable').classList.remove('hidden');">Cancel</button>
                     </div>
                     <label>Brand: <input type="text" id="editCarBrand"></label><br>
                     <label>Model: <input type="text" id="editCarModel"></label><br>
@@ -294,7 +294,7 @@
                     <h2>Add Circuit</h2>
                     <div class="form-buttons">
                         <button onclick="addCircuit()">Save</button>
-                        <button onclick="cancelAddCircuit()">Cancel</button>
+                        <button onclick="document.getElementById('addCircuitForm').style.display='none'; document.getElementById('circuitsTable').style.display='table';">Cancel</button>
                     </div>
                     <label>Name: <input type="text" id="circuitName"></label><br>
                     <label>Country: <input type="text" id="circuitCountry"></label><br>
@@ -311,7 +311,7 @@
                     <h2>Edit Circuit</h2>
                     <div class="form-buttons">
                         <button onclick="saveEditedCircuit()">Save</button>
-                        <button onclick="document.getElementById('editCircuitForm').style.display = 'none'; document.getElementById('circuitsTable').classList.remove('hidden');">Cancel</button>
+                        <button onclick="document.getElementById('editCircuitForm').style.display='none'; document.getElementById('circuitsTable').style.display='table';">Cancel</button><button onclick="document.getElementById('editCircuitForm').style.display = 'none'; document.getElementById('circuitsTable').classList.remove('hidden');">Cancel</button>
                     </div>
                     <label>Name: <input type="text" id="editCircuitName"></label><br>
                     <label>Country: <input type="text" id="editCircuitCountry"></label><br>
