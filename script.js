@@ -2,11 +2,12 @@
 const firebaseConfig = {
     apiKey: "AIzaSyCVH9tFfsmm040flswAVgPoXWAqcb_CDqY",
     authDomain: "rsr-event-management.firebaseapp.com",
+    databaseURL: "https://rsr-event-management-default-rtdb.firebaseio.com", // Add this
     projectId: "rsr-event-management",
-    storageBucket: "rsr-event-management.firebasestorage.app",
+    storageBucket: "rsr-event-management.appspot.com", // Corrected
     messagingSenderId: "586578702881",
     appId: "1:586578702881:web:e9091b4a11576eaa35a960"
-  };
+};
 
 // Initialize Firebase
 let app, db, eventsRef, clientsRef, carsRef, circuitsRef;
@@ -17,8 +18,16 @@ try {
     clientsRef = db.ref('clients');
     carsRef = db.ref('cars');
     circuitsRef = db.ref('circuits');
+    
+    // Load data after initialization
+    loadData();
 } catch (error) {
     console.error("Firebase initialization failed:", error);
+    // Initialize empty data structures if Firebase fails
+    events = [];
+    clients = [];
+    cars = [];
+    circuits = [];
 }
 
 // Data storage
@@ -74,16 +83,8 @@ function loadData() {
 window.onload = function() {
     if (db) {
         loadData();
-        showSection('home'); // Show home screen by default
-    } else {
-        console.error("Firebase not ready on page load.");
-        showSection('home'); // Show home screen even if Firebase fails
     }
-};
-
-// Call loadData when the page loads
-window.onload = function() {
-    loadData();
+    showSection('events'); // Show events screen by default
 };
 
 function isValidDate(year, month, day) {
@@ -93,40 +94,31 @@ function isValidDate(year, month, day) {
 
 // Show a specific section and hide others
 function showSection(sectionId) {
-    loadData(); // Ensure latest data is loaded
-    const sections = document.querySelectorAll('.section');
-    sections.forEach(section => {
-        section.style.display = 'none';
+    // Hide all sections
+    document.querySelectorAll('.section').forEach(section => {
+        section.classList.remove('active');
     });
-    const activeSection = document.getElementById(sectionId);
-    activeSection.style.display = 'block';
-
-    if (sectionId === 'events') {
-        document.getElementById('eventsControls').style.display = 'block';
-        document.getElementById('eventsTable').classList.remove('hidden');
-        document.getElementById('addEventForm').style.display = 'none';
-        document.getElementById('editEventForm').style.display = 'none';
-        // updateEventsTable() is called by loadData
-    } else if (sectionId === 'clients') {
-        document.getElementById('clientsTable').classList.remove('hidden');
-        document.getElementById('addClientForm').style.display = 'none';
-        document.getElementById('editClientForm').style.display = 'none';
-        document.getElementById('importClientsForm').style.display = 'none';
-        // updateClientsTable() is called by loadData
-    } else if (sectionId === 'cars') {
-        document.getElementById('carsTable').classList.remove('hidden');
-        document.getElementById('addCarForm').style.display = 'none';
-        document.getElementById('editCarForm').style.display = 'none';
-        document.getElementById('importCarsForm').style.display = 'none';
-        // updateCarsTable() is called by loadData
-    } else if (sectionId === 'circuits') {
-        document.getElementById('circuitsTable').classList.remove('hidden');
-        document.getElementById('addCircuitForm').style.display = 'none';
-        document.getElementById('editCircuitForm').style.display = 'none';
-        document.getElementById('importCircuitsForm').style.display = 'none';
-        // updateCircuitsTable() is called by loadData
-    } else if (sectionId === 'priceList') {
-        updatePriceListTable();
+    
+    // Show the selected section
+    document.getElementById(sectionId).classList.add('active');
+    
+    // Load appropriate data
+    switch(sectionId) {
+        case 'events':
+            updateEventsTable();
+            break;
+        case 'clients':
+            updateClientsTable();
+            break;
+        case 'cars':
+            updateCarsTable();
+            break;
+        case 'circuits':
+            updateCircuitsTable();
+            break;
+        case 'priceList':
+            updatePriceListTable();
+            break;
     }
 }
 
