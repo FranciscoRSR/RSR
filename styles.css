@@ -20,16 +20,17 @@ body {
 /* Header */
 header {
     position: fixed;
+    flex-direction: column;
     top: 0;
     width: 100%;
     z-index: 1000;
     background-color: #1A2A44;
-    padding: 20px 10px; /* Adjusted padding to give space on sides */
+    background: #fff;
+    padding: 20px 10px;
     display: flex;
     justify-content: space-between;
     align-items: center;
     box-sizing: border-box; /* Ensures padding doesn’t push content out */
-}
 
 .logo img {
     height: 50px; /* Adjust based on logo size */
@@ -70,8 +71,8 @@ main {
 
 .section {
     display: none;
+    padding: 20px;
     background-color: #FFFFFF;
-    padding: 30px;
     border-radius: 10px;
     box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
     margin-bottom: 20px;
@@ -165,7 +166,7 @@ input[type="date"] {
 
 /* Tables */
 .table-container {
-    overflow-x: auto; /* Enables horizontal scrolling for wide tables */
+    overflow-x: auto;
     margin-top: 20px;
     border-radius: 10px;
     box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
@@ -285,11 +286,6 @@ footer {
     th {
         background-color: #1A2A44;
         color: #FFFFFF;
-    }
-    
-    header {
-        flex-direction: column;
-        padding: 15px;
     }
 
     .main-nav {
@@ -527,13 +523,6 @@ footer {
     background-color: #45A049;
 }
 
-header {
-    position: fixed;
-    top: 0;
-    width: 100%;
-    z-index: 1000; /* High z-index for header */
-    background: #fff;
-}
 
 .event-container {
     margin-top: 60px; /* Space for fixed header */
@@ -556,4 +545,12 @@ header {
 #clientSearch {
     position: relative;
     width: 300px;
+}
+
+.hidden {
+    display: none !important;
+}
+
+.table-visible {
+    display: table;
 }
