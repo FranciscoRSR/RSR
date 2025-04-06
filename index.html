@@ -1,0 +1,372 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>RSR Event Management</title>
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.23/jspdf.plugin.autotable.min.js"></script>
+        <link rel="stylesheet" href="styles.css">
+        <link rel="icon" href="https://rsrbooking.com/assets/rsr-nurburg+spa-logo.svg" type="image/svg+xml">
+    </head>
+    <body>
+        <header>
+            <div class="logo">
+                    <img src="https://rsrbooking.com/assets/rsr-nurburg+spa-logo.svg" alt="RSR Logo">
+            </div>
+            <nav class="main-nav">
+                <button id="eventsBtn">Events</button>
+                <button id="clientsBtn">Clients</button>
+                <button id="carsBtn">Cars</button>
+                <button id="circuitsBtn">Circuits</button>
+                <button id="priceListBtn">Price List</button>
+            </nav>
+        </header>
+    
+        <main>
+            <!-- Events Section -->
+            <div id="events" class="section">
+                <h1>Events</h1>
+                <div id="eventsControls">
+                    <button onclick="showAddEventForm()">Add Event</button>
+                </div>
+                    <div class="table-container">
+                        <table id="eventsTable">
+                            <thead>
+                                <tr>
+                                    <th>Name</th>
+                                    <th>Year (Month/s)</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody></tbody>
+                        </table>
+                    </div>
+                <div id="addEventForm" class="form-container">
+                    <h2>Add Event</h2>
+                    <div class="form-buttons">
+                        <button onclick="addEvent()">Save</button>
+                       <button onclick="document.getElementById('addEventForm').style.display='none'; document.getElementById('eventsTable').style.display='table';">Cancel</button>
+                    </div>
+                    <label>Event Name: <input type="text" id="eventName"></label><br>
+                    <label>Number of Days: <input type="number" id="eventDays" min="1"></label><br>
+                    <div id="eventDaysInputs"></div>
+                </div>
+    
+                <div id="editEventForm" class="form-container">
+                    <h2>Edit Event: <span id="editEventName"></span></h2>
+                    <div id="editEventDays"></div>
+                    <div class="form-buttons">
+                        <button onclick="document.getElementById('editEventForm').style.display='none'; document.getElementById('eventsTable').style.display='table';">Cancel</button>
+                    </div>
+                    <div id="eventDetails"></div>
+                    <!-- Updated Participant Management Section -->
+                    <div id="participantsSection" class="participants-section" style="display: none;">
+                        <h3>Participants</h3>
+                        <div class="participant-add">
+                            <input type="text" id="clientSearch" placeholder="Type to search clients..." onkeyup="filterClients()">
+                            <div id="clientMultiSelect" class="multi-select-dropdown" style="display: none;">
+                                <div id="clientOptions"></div>
+                                <button onclick="addSelectedClients()">Add Selected Clients</button>
+                            </div>
+                        </div>
+                        <div class="table-container">
+                            <table id="participantsTable">
+                                <thead id="participantsTableHeader"></thead>
+                                <tbody id="participantsTableBody"></tbody>
+                            </table>
+                        </div>
+                        <div class="form-buttons">
+                            <button onclick="saveAllParticipants()">Save Participants</button>
+                            <button onclick="hideAllEditForms()">Close</button>
+                        </div>
+                    </div>
+                </div>
+    
+                <div id="editEventDetailsForm" class="form-container">
+                    <h2>Edit Event Details</h2>
+                    <div class="form-buttons">
+                        <button onclick="saveEventDetails()">Save</button>
+                        <button onclick="document.getElementById('editEventDetailsForm').style.display = 'none';">Cancel</button>
+                    </div>
+                    <label>Event Name: <input type="text" id="editEventNameInput"></label><br>
+                    <div id="editEventDaysInputs"></div>
+                </div>
+    
+                <div id="assignCircuitsForm" class="form-container">
+                    <h2>Assign Circuits</h2>
+                    <div class="form-buttons">
+                        <button onclick="saveCircuits()">Save</button>
+                        <button onclick="document.getElementById('assignCircuitsForm').style.display = 'none';">Cancel</button>
+                    </div>
+                    <div id="circuitAssignments"></div>
+                </div>
+    
+                <div id="assignCarsPricingForm" class="form-container">
+                    <h2>Assign Cars & Pricing</h2>
+                    <div class="form-buttons">
+                        <button onclick="saveCarsPricing()">Save</button>
+                        <button onclick="document.getElementById('assignCarsPricingForm').style.display = 'none';">Cancel</button>
+                    </div>
+                    <div id="availableCarsSelection"></div>
+                    <div id="carsPricingInputs"></div>
+                </div>
+    
+                <div id="editParticipantForm" class="section form-container">
+                    <h2>Edit Participant: <span id="editParticipantName"></span></h2>
+                        <div class="table-container">
+                            <table>
+                                <thead id="editParticipantsTableHeader"></thead>
+                                <tbody id="editParticipantsTableBody"></tbody>
+                            </table>
+                        </div>
+                    <button onclick="saveEditedParticipants()">Save</button>
+                    <button onclick="cancelAddParticipant()">Cancel</button>
+                </div>
+    
+                <div id="enterDrivenDataForm" class="form-container">
+                    <h2>Enter Driven Data</h2>
+                    <div class="form-buttons">
+                        <button onclick="saveDrivenData()">Save</button>
+                        <button onclick="document.getElementById('enterDrivenDataForm').style.display = 'none';">Cancel</button>
+                    </div>
+                    <label>Select Day: <select id="drivenDay" onchange="updateDrivenDataClients()"></select></label>
+                    <div class="checkbox-container">
+                        <input type="checkbox" id="dayFinishedCheckbox">
+                        <label for="dayFinishedCheckbox">Day Finished</label>
+                    </div>
+                    <div id="drivenDataInputs"></div>
+                </div>
+    
+                <div id="clientPackageForm" class="form-container">
+                    <h2>Client Package Payments</h2>
+                    <div class="form-buttons">
+                        <button onclick="saveClientPackage()">Save</button>
+                        <button onclick="document.getElementById('clientPackageForm').style.display = 'none';">Cancel</button>
+                    </div>
+                        <div class="table-container">
+                            <table>
+                                <thead id="clientPackageTableHeader"></thead>
+                                <tbody id="clientPackageTableBody"></tbody>
+                            </table>
+                        </div>
+                </div>
+    
+                <div id="overviewForm" class="form-container">
+                    <h2>Event Overview</h2>
+                    <div class="form-buttons">
+                        <button onclick="generateEventOverviewPDF()">Download PDF</button>
+                        <button onclick="document.getElementById('overviewForm').style.display = 'none';">Close</button>
+                    </div>
+                        <div class="table-container">
+                            <table id="overviewTable">
+                                <thead id="overviewTableHeader"></thead>
+                                <tbody id="overviewTableBody"></tbody>
+                            </table>
+                        </div>
+                </div>
+    
+                <div id="processBalancesForm" class="form-container">
+                    <h2>Add Payments</h2>
+                    <div class="form-buttons">
+                        <button onclick="saveBalances()">Save Payments</button>
+                        <button onclick="document.getElementById('processBalancesForm').style.display = 'none';">Cancel</button>
+                    </div>
+                        <div class="table-container">
+                            <table>
+                                <thead id="balancesTableHeader"></thead>
+                                <tbody id="balancesTableBody"></tbody>
+                            </table>
+                        </div>
+                </div>
+            </div>
+    
+            <!-- Clients Section -->
+            <div id="clients" class="section">
+                <h1>Clients</h1>
+                <button onclick="showAddClientForm()">Add Client</button>
+                <button onclick="showImportClientsForm()">Import Clients</button>
+                    <div class="table-container">
+                        <table id="clientsTable">
+                            <thead>
+                                <tr><th>Name</th><th>Surname</th><th>Email</th><th>Country</th><th>Actions</th><th>Delete</th></tr>
+                            </thead>
+                            <tbody></tbody>
+                        </table>
+                    </div>
+                <div id="addClientForm" class="form-container">
+                    <h2>Add Client</h2>
+                    <div class="form-buttons">
+                        <button onclick="addClient()">Save</button>
+                        <button onclick="document.getElementById('addClientForm').style.display='none'; document.getElementById('clientsTable').style.display='table';">Cancel</button>
+                    </div>
+                    <label>Name: <input type="text" id="clientName"></label><br>
+                    <label>Surname: <input type="text" id="clientSurname"></label><br>
+                    <label>Email: <input type="email" id="clientEmail"></label><br>
+                    <label>Country: <input type="text" id="clientCountry"></label>
+                </div>
+    
+                <div id="editClientForm" class="form-container">
+                    <h2>Edit Client</h2>
+                    <div class="form-buttons">
+                        <button onclick="saveEditedClient()">Save</button>
+                        <button onclick="document.getElementById('editClientForm').style.display='none'; document.getElementById('clientsTable').style.display='table';">Cancel</button><button onclick="document.getElementById('editClientForm').style.display = 'none'; document.getElementById('clientsTable').classList.remove('hidden');">Cancel</button>
+                    </div>
+                    <label>Name: <input type="text" id="editClientName"></label><br>
+                    <label>Surname: <input type="text" id="editClientSurname"></label><br>
+                    <label>Email: <input type="email" id="editClientEmail"></label><br>
+                    <label>Country: <input type="text" id="editClientCountry"></label>
+                </div>
+    
+                <div id="importClientsForm" class="form-container">
+                    <h2>Import Clients</h2>
+                    <div class="form-buttons">
+                        <button onclick="importClients()">Import</button>
+                        <button onclick="document.getElementById('importClientsForm').style.display = 'none'; document.getElementById('clientsTable').classList.remove('hidden');">Cancel</button>
+                    </div>
+                    <input type="file" id="clientsFile" accept=".csv">
+                </div>
+            </div>
+    
+            <!-- Cars Section -->
+            <div id="cars" class="section">
+                <h1>Cars</h1>
+                <button onclick="showAddCarForm()">Add Car</button>
+                <button onclick="showImportCarsForm()">Import Cars</button>
+                    <div class="table-container">
+                        <table id="carsTable">
+                            <thead>
+                                <tr><th>Brand</th><th>Model</th><th>License Plate</th><th>Basic Price/Lap</th><th>All-Inc Price/Lap</th><th>Basic Price/km</th><th>Fuel Cost/km</th><th>Highest Mileage</th><th>Actions</th><th>Delete</th></tr>
+                            </thead>
+                            <tbody></tbody>
+                        </table>
+                    </div>
+                <div id="addCarForm" class="form-container">
+                    <h2>Add Car</h2>
+                    <div class="form-buttons">
+                        <button onclick="addCar()">Save</button>
+                        <button onclick="document.getElementById('addCarForm').style.display='none'; document.getElementById('carsTable').style.display='table';">Cancel</button>
+                    </div>
+                    <label>Brand: <input type="text" id="carBrand"></label><br>
+                    <label>Model: <input type="text" id="carModel"></label><br>
+                    <label>License Plate: <input type="text" id="carPlate"></label><br>
+                    <label>Basic Price per Lap: <input type="number" id="carBasicPriceLap" step="0.01"></label><br>
+                    <label>All-Inc Price per Lap: <input type="number" id="carAllIncPriceLap" step="0.01"></label><br>
+                    <label>Basic Price per km: <input type="number" id="carBasicPriceKm" step="0.01"></label><br>
+                    <label>Fuel Cost per km: <input type="number" id="carFuelCostKm" step="0.01"></label>
+                </div>
+    
+                <div id="editCarForm" class="form-container">
+                    <h2>Edit Car</h2>
+                    <div class="form-buttons">
+                        <button onclick="saveEditedCar()">Save</button>
+                        <button onclick="document.getElementById('editCarForm').style.display='none'; document.getElementById('carsTable').style.display='table';">Cancel</button><button onclick="document.getElementById('editCarForm').style.display = 'none'; document.getElementById('carsTable').classList.remove('hidden');">Cancel</button>
+                    </div>
+                    <label>Brand: <input type="text" id="editCarBrand"></label><br>
+                    <label>Model: <input type="text" id="editCarModel"></label><br>
+                    <label>License Plate: <input type="text" id="editCarPlate"></label><br>
+                    <label>Basic Price per Lap: <input type="number" id="editCarBasicPriceLap" step="0.01"></label><br>
+                    <label>All-Inc Price per Lap: <input type="number" id="editCarAllIncPriceLap" step="0.01"></label><br>
+                    <label>Basic Price per km: <input type="number" id="editCarBasicPriceKm" step="0.01"></label><br>
+                    <label>Fuel Cost per km: <input type="number" id="editCarFuelCostKm" step="0.01"></label>
+                </div>
+    
+                <div id="importCarsForm" class="form-container">
+                    <h2>Import Cars</h2>
+                    <div class="form-buttons">
+                        <button onclick="importCars()">Import</button>
+                        <button onclick="document.getElementById('importCarsForm').style.display = 'none'; document.getElementById('carsTable').classList.remove('hidden');">Cancel</button>
+                    </div>
+                    <input type="file" id="carsFile" accept=".csv">
+                </div>
+            </div>
+    
+            <!-- Circuits Section -->
+            <div id="circuits" class="section">
+                <h1>Circuits</h1>
+                <button onclick="showAddCircuitForm()">Add Circuit</button>
+                <button onclick="showImportCircuitsForm()">Import Circuits</button>
+                    <div class="table-container">
+                        <table id="circuitsTable">
+                            <thead>
+                                <tr><th>Name</th><th>Country</th><th>Length (km)</th><th>Pricing Type</th><th>Actions</th><th>Delete</th></tr>
+                            </thead>
+                            <tbody></tbody>
+                        </table>
+                    </div>
+                <div id="addCircuitForm" class="form-container">
+                    <h2>Add Circuit</h2>
+                    <div class="form-buttons">
+                        <button onclick="addCircuit()">Save</button>
+                        <button onclick="document.getElementById('addCircuitForm').style.display='none'; document.getElementById('circuitsTable').style.display='table';">Cancel</button>
+                    </div>
+                    <label>Name: <input type="text" id="circuitName"></label><br>
+                    <label>Country: <input type="text" id="circuitCountry"></label><br>
+                    <label>Length (km): <input type="number" id="circuitLength" step="0.01"></label><br>
+                    <label>Pricing Type: 
+                        <select id="circuitPricingType">
+                            <option value="per lap">Per Lap</option>
+                            <option value="per km">Per km</option>
+                        </select>
+                    </label>
+                </div>
+    
+                <div id="editCircuitForm" class="form-container">
+                    <h2>Edit Circuit</h2>
+                    <div class="form-buttons">
+                        <button onclick="saveEditedCircuit()">Save</button>
+                        <button onclick="document.getElementById('editCircuitForm').style.display='none'; document.getElementById('circuitsTable').style.display='table';">Cancel</button><button onclick="document.getElementById('editCircuitForm').style.display = 'none'; document.getElementById('circuitsTable').classList.remove('hidden');">Cancel</button>
+                    </div>
+                    <label>Name: <input type="text" id="editCircuitName"></label><br>
+                    <label>Country: <input type="text" id="editCircuitCountry"></label><br>
+                    <label>Length (km): <input type="number" id="editCircuitLength" step="0.01"></label><br>
+                    <label>Pricing Type: 
+                        <select id="editCircuitPricingType">
+                            <option value="per lap">Per Lap</option>
+                            <option value="per km">Per km</option>
+                        </select>
+                    </label>
+                </div>
+    
+                <div id="importCircuitsForm" class="form-container">
+                    <h2>Import Circuits</h2>
+                    <div class="form-buttons">
+                        <button onclick="importCircuits()">Import</button>
+                        <button onclick="document.getElementById('importCircuitsForm').style.display = 'none'; document.getElementById('circuitsTable').classList.remove('hidden');">Cancel</button>
+                    </div>
+                    <input type="file" id="circuitsFile" accept=".csv">
+                </div>
+            </div>
+    
+            <!-- Price List Section -->
+            <div id="priceList" class="section">
+                <h1>Price List</h1>
+                <button onclick="exportPriceList()">Export Price List</button>
+                    <div class="table-container">
+                        <table id="priceListTable">
+                            <thead id="priceListTableHeader"></thead>
+                            <tbody id="priceListTableBody"></tbody>
+                        </table>
+                    </div>
+            </div>
+        </main>
+    
+        <footer>
+            <p>© 2025 RSR Nürburg & Spa. All rights reserved.</p>
+        </footer>
+        <!-- Firebase Compat SDK -->
+        <script src="https://www.gstatic.com/firebasejs/11.6.0/firebase-app-compat.js"></script>
+        <script src="https://www.gstatic.com/firebasejs/11.6.0/firebase-database-compat.js"></script>
+        <script src="script.js"></script>
+        <div id="viewPaymentsModal" class="modal" style="display: none;">
+            <div class="modal-content">
+                <div id="viewPaymentsContent"></div>
+                <div class="modal-buttons">
+                    <button onclick="document.getElementById('viewPaymentsModal').style.display = 'none'">Close</button>
+                </div>
+            </div>
+        </div>
+        <script type="text/javascript">
+            (function(){/* Cloudflare script */})();
+        </script>
+</html>

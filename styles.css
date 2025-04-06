@@ -1,0 +1,632 @@
+styles.css
+
+/* Reset and Base Styles */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: 'Arial', sans-serif;
+    background-color: #F5F6F5;
+    color: #1A2A44;
+    line-height: 1.6;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    padding-top: 90px; /* Add this to prevent header overlap */
+}
+
+/* Header */
+header {
+    position: fixed;
+    top: 0;
+    width: 100%;
+    min-height: 90px; /* Use min-height instead of fixed height */
+    z-index: 1000;
+    background-color: #1A2A44;
+    padding: 20px 10px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    box-sizing: border-box;
+}
+
+
+.logo img {
+    height: 50px; /* Adjust based on logo size */
+}
+
+.main-nav {
+    display: flex;
+    gap: 10px;
+    overflow-x: auto; /* Allows horizontal scrolling if buttons overflow */
+    white-space: nowrap; /* Keeps buttons in a single line */
+    padding-right: 10px; /* Adds space on the right */
+}
+
+.main-nav button {
+    background-color: #FF6666;
+    color: #FFFFFF;
+    border: none;
+    padding: 10px 20px;
+    border-radius: 5px;
+    font-size: 16px;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+    min-width: 100px; /* Ensures buttons don’t get too small */
+}
+
+.main-nav button:hover {
+    background-color: #FF4D4D; /* Updated darker red for hover */
+}
+
+/* Main Content */
+main {
+    flex: 1;
+    width: 100%;
+    max-width: 1400px;
+    margin: 0 auto;
+    padding: 20px;
+    position: relative;
+    z-index: 1;
+}
+
+.section {
+    display: none;
+    background-color: #FFFFFF;
+    padding: 30px;
+    border-radius: 10px;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+    margin-bottom: 20px;
+}
+
+.section.active {
+    display: block;
+}
+
+/* Typography */
+h1, h2, h3, h4 {
+    color: #1A2A44; /* Dark blue */
+    margin-bottom: 15px;
+}
+
+h1 {
+    font-size: 32px;
+    text-align: center;
+}
+
+#editEventDays {
+    font-size: 16px;
+    line-height: 0.5em;
+    margin: -1;
+    padding: 0;
+}
+
+/* Buttons */
+button {
+    background-color: #FF6666; /* Updated light red */
+    min-height: 40px;
+    color: #FFFFFF;
+    border: none;
+    padding: 8px 16px;
+    border-radius: 5px;
+    cursor: pointer;
+    font-size: 14px;
+    transition: all 0.3s ease;
+}
+
+button:hover {
+    background-color: #FF4D4D; /* Updated darker red for hover */
+}
+
+.add-car-btn {
+    background-color: #FF9999;
+    padding: 6px 12px;
+    font-size: 12px;
+}
+
+.add-car-btn:hover {
+    background-color: #FF4D4D; /* Updated darker red for hover */
+}
+
+.remove-car-btn {
+    background-color: #FF6666;
+    padding: 6px 12px;
+    font-size: 12px;
+}
+
+.remove-car-btn:hover {
+    background-color: #FF4D4D;
+}
+
+/* Forms */
+label {
+    color: #1A2A44;
+    display: block;
+    margin: 10px 0 5px;
+}
+
+input, select, textarea {
+    width: 100%;
+    max-width: 400px;
+    padding: 10px;
+    border: 1px solid #DDD;
+    border-radius: 4px;
+    font-size: 14px;
+    margin-bottom: 15px;
+    box-sizing: border-box;
+}
+
+input[type="date"] {
+    cursor: pointer;
+    /* Add any additional styling if needed */
+}
+
+.form-buttons {
+    display: flex;
+    gap: 10px;
+    margin-top: 20px;
+    margin-bottom: 20px;
+}
+
+/* Tables */
+.table-container {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    margin: 20px 0;
+    border-radius: 8px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+}
+
+table {
+    min-width: 100%;
+    border-collapse: separate;
+    border-spacing: 0;
+}
+
+th, td {
+    padding: 12px 15px; /* More padding for readability */
+    text-align: left;
+    border-bottom: 1px solid #E0E0E0;
+}
+
+th {
+    background-color: #1A2A44; /* Dark blue headers */
+    color: #FFFFFF;
+    font-weight: 600;
+    text-transform: uppercase; /* Professional touch */
+    letter-spacing: 0.5px;
+    position: sticky; /* Keeps headers visible when scrolling */
+    top: 0;
+    z-index: 10;
+}
+
+td {
+    color: #1A2A44;
+}
+
+tr:nth-child(even) {
+    background-color: #F9FAFB; /* Lighter gray for even rows */
+}
+
+tr:hover {
+    background-color: #F1F5F9; /* Subtle hover effect */
+}
+
+/* Modal */
+.modal {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.7);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 2000;
+}
+
+.modal-content {
+    background-color: white;
+    padding: 25px;
+    border-radius: 8px;
+    width: 90%;
+    max-width: 800px;
+    max-height: 80vh;
+    overflow-y: auto;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.25);
+}
+
+.modal-buttons {
+    margin-top: 20px;
+    text-align: right;
+}
+
+.modal-content table {
+    width: 100%;
+    margin: 20px 0;
+}
+
+.modal-content button {
+    margin: 10px 5px;
+}
+
+#viewPaymentsContent table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 15px 0;
+}
+
+#viewPaymentsContent th, 
+#viewPaymentsContent td {
+    padding: 10px;
+    border: 1px solid #ddd;
+    text-align: left;
+}
+
+#viewPaymentsContent th {
+    background-color: #1A2A44;
+    color: white;
+}
+
+#viewPaymentsContent tr:nth-child(even) {
+    background-color: #f2f2f2;
+}
+
+/* Footer */
+footer {
+    background-color: #1A2A44;
+    color: #FFFFFF;
+    text-align: center;
+    padding: 15px;
+    width: 100%; /* Ensures footer spans full width */
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+
+    .modal-content {
+        width: 95%;
+        max-height: 70vh; /* Reduce height on smaller screens */
+    }
+
+    body {
+        padding-top: 120px; /* Increased for mobile header */
+    }
+
+    header {
+        height: auto;
+        flex-direction: column;
+        padding: 15px;
+    }
+
+    .main-nav {
+        flex-wrap: wrap;
+        justify-content: center;
+        margin-top: 10px;
+    }
+
+    .section, .form-container {
+        padding: 15px;
+    }
+
+    .car-selection-group {
+        display: block;
+    }
+    .car-selection {
+        margin-bottom: 10px;
+    }
+    .multi-select-dropdown {
+        position: static;
+        width: 100%;
+        max-width: none;
+    }
+    
+    table, thead, tbody, th, td, tr {
+        display: block;
+    }
+
+    th, td {
+        width: 100%;
+        text-align: right;
+        position: relative;
+        padding-left: 50%;
+        padding-right: 10px; /* Add right padding */
+        word-break: break-word; /* Prevent overflow */
+    }
+
+    th::before, td::before {
+        content: attr(data-label);
+        position: absolute;
+        left: 10px;
+        width: 45%;
+        padding-right: 10px;
+        font-weight: bold;
+        text-align: left;
+        color: #1A2A44;
+    }
+
+    th {
+        background-color: #1A2A44;
+        color: #FFFFFF;
+    }
+
+    .main-nav {
+        flex-wrap: wrap;
+        justify-content: center;
+    }
+
+    .main-nav button {
+        margin: 5px;
+    }
+
+    .section {
+        padding: 20px;
+    }
+
+    .section {
+    display: none;
+    }
+
+    table, thead, tbody, th, td, tr {
+        display: block;
+    }
+
+    th, td {
+        width: 100%;
+        text-align: right;
+        position: relative;
+        padding-left: 50%;
+    }
+
+    th::before, td::before {
+        content: attr(data-label);
+        position: absolute;
+        left: 10px;
+        width: 45%;
+        padding-right: 10px;
+        font-weight: bold;
+        text-align: left;
+    }
+}
+
+.car-btn {
+    background-color: #E0E0E0; /* Light gray for unselected state */
+    color: #1A2A44; /* Dark blue text */
+    border: 2px solid #1A2A44; /* Dark blue border */
+    padding: 10px 15px;
+    border-radius: 5px;
+    cursor: pointer;
+    font-size: 14px;
+    margin: 5px; /* Space between buttons */
+    transition: all 0.3s ease; /* Smooth transition */
+}
+
+.car-btn:hover {
+    background-color: #CCCCCC; /* Slightly darker gray on hover */
+}
+
+.car-btn.selected {
+    background-color: #FF4D4D; /* Updated darker red for selected state */
+    color: #FFFFFF;
+    border-color: #FF3333; /* Even darker border for contrast */
+    box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.2);
+}
+
+.model-group {
+    margin-bottom: 15px;
+}
+
+.model-btn {
+    background-color: #E0E0E0;
+    color: #1A2A44;
+    border: 2px solid #1A2A44;
+    padding: 10px 15px;
+    border-radius: 5px;
+    cursor: pointer;
+    font-size: 14px;
+    margin-right: 10px;
+    transition: all 0.3s ease;
+}
+
+.model-btn:hover {
+    background-color: #CCCCCC;
+}
+
+.model-btn.selected {
+    background-color: #FF8080;
+    color: #FFFFFF;
+    border-color: #FF6666;
+    box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.2);
+}
+
+.model-btn.partial {
+    background-color: #FF9999; /* Keep this lighter for partial selection */
+    color: #1A2A44;
+    border-color: #FF6666; /* Updated to match new base color */
+}
+
+.expand-btn {
+    background-color: #E0E0E0;
+    color: #1A2A44;
+    border: 1px solid #1A2A44;
+    padding: 5px 10px;
+    border-radius: 5px;
+    cursor: pointer;
+    font-size: 12px;
+    transition: all 0.3s ease;
+}
+
+.expand-btn:hover {
+    background-color: #CCCCCC;
+}
+
+.plates-list {
+    margin-left: 20px;
+    margin-top: 5px;
+}
+
+.plate-btn {
+    background-color: #F0F0F0;
+    color: #1A2A44;
+    border: 1px solid #1A2A44;
+    padding: 5px 10px;
+    border-radius: 5px;
+    cursor: pointer;
+    font-size: 12px;
+    margin: 5px;
+    transition: all 0.3s ease;
+    display: inline-block;
+}
+
+.plate-btn:hover {
+    background-color: #D9D9D9;
+}
+
+.plate-btn.selected {
+    background-color: #FF6666; /* Updated light red */
+    color: #FFFFFF;
+    border-color: #FF4D4D; /* Updated darker red */
+    box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.2);
+}
+
+.select-all-btn {
+    background-color: #E0E0E0;
+    color: #1A2A44;
+    border: 2px solid #1A2A44;
+    padding: 10px 15px;
+    border-radius: 5px;
+    cursor: pointer;
+    font-size: 14px;
+    margin-bottom: 10px;
+    transition: all 0.3s ease;
+}
+
+.select-all-btn:hover {
+    background-color: #CCCCCC;
+}
+
+.select-all-btn.selected {
+    background-color: #FF4D4D; /* Updated darker red */
+    color: #FFFFFF;
+    border-color: #FF3333;
+    box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.2);
+}
+
+.modify-pricing-btn {
+    background-color: #E0E0E0;
+    color: #1A2A44;
+    border: 1px solid #1A2A44;
+    padding: 10px 15px;
+    border-radius: 5px;
+    cursor: pointer;
+    font-size: 14px;
+    margin-top: 10px;
+    transition: all 0.3s ease;
+}
+
+.modify-pricing-btn:hover {
+    background-color: #CCCCCC;
+}
+
+#pricingInputsContainer {
+    margin-top: 15px;
+}
+.participant-add {
+    margin-bottom: 15px;
+    position: relative; /* Already set, ensures dropdown is positioned relative to this */
+}
+
+#clientSearch {
+    padding: 10px;
+    border: 1px solid #DDDDDD;
+    border-radius: 5px;
+    width: 100%;
+    max-width: 300px;
+}
+
+.multi-select-dropdown label {
+    display: block;
+    padding: 5px 10px;
+    cursor: pointer;
+}
+
+.multi-select-dropdown label:hover {
+    background-color: #F0F0F0;
+}
+
+.multi-select-dropdown button {
+    width: 100%;
+    padding: 10px;
+    background-color: #4CAF50;
+    color: white;
+    border: none;
+    border-top: 1px solid #DDDDDD;
+    border-radius: 0 0 5px 5px;
+    cursor: pointer;
+}
+
+.multi-select-dropdown button:hover {
+    background-color: #45A049;
+}
+
+
+.event-container {
+    margin-top: 60px; /* Space for fixed header */
+    position: relative;
+}
+
+.multi-select-dropdown {
+    position: absolute;
+    top: 100%; /* Aligns the top of the dropdown with the bottom of the input */
+    left: 0;
+    background-color: #FFFFFF;
+    border: 1px solid #DDDDDD;
+    border-radius: 5px;
+    max-height: 200px;
+    overflow-y: auto;
+    width: 100%;
+    max-width: 300px;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+    z-index: 10001;
+    display: none; /* Ensure it starts hidden */
+}
+
+#clientSearch {
+    position: relative;
+    width: 300px;
+}
+
+.hidden {
+    display: none !important;
+}
+
+.table-visible {
+    display: table;
+}
+
+.form-container {
+    display: none;
+    background-color: #FFFFFF;
+    padding: 20px;
+    border-radius: 8px;
+    margin-top: 20px;
+    border: 1px solid #E0E0E0;
+}
+
+.form-container.active {
+    display: block;
+}
+
+.checkbox-container {
+    display: flex;
+    align-items: center; /* Vertically centers the checkbox and label */
+    gap: 8px; /* Adds spacing between checkbox and label */
+}
+
+#dayFinishedCheckbox {
+    margin: 0; /* Remove default margin that might interfere */
+}
