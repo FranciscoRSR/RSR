@@ -530,12 +530,6 @@ function removeParticipant(participantIndex) {
 function saveAllParticipants() {
     const event = events[currentEventIndex];
 
-    // Safeguard: Ensure cars_assigned is initialized
-    if (!event.cars_assigned || typeof event.cars_assigned !== 'object') {
-        console.warn(`cars_assigned is undefined or not an object for event ${event.name}. Initializing now.`);
-        event.cars_assigned = {};
-    }
-
     event.participants.forEach((participant, participantIndex) => {
         const carsPerDay = [];
         const packagesPerDay = [];
@@ -587,6 +581,7 @@ function saveAllParticipants() {
             if (!Array.isArray(participant.driven_per_day[dayIndex])) {
                 participant.driven_per_day[dayIndex] = Array(dayCars.length).fill(0);
             } else if (participant.driven_per_day[dayIndex].length !== dayCars.length) {
+                // Adjust driven_per_day length to match cars (could be 0 if no cars)
                 participant.driven_per_day[dayIndex] = Array(dayCars.length).fill(0);
             }
         });
@@ -594,6 +589,10 @@ function saveAllParticipants() {
         participant.car_per_day = carsPerDay;
         participant.package_per_day = packagesPerDay;
     });
+
+    // Remove the filter that requires cars to be assigned
+    // event.participants = event.participants.filter(p => p.car_per_day.some(day => day.length > 0));
+    // Instead, ensure all participants are kept, even with no cars
 
     saveData();
     updateParticipantsTable();
