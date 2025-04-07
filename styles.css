@@ -506,6 +506,11 @@ footer {
         padding: 8px 12px;
     }
 
+    .modal-content {
+        padding: 15px;
+        width: 95%;
+    }
+    
     /* Mobile-optimized tables */
     .table-container {
         overflow-x: auto; /* Enable horizontal scrolling */
