@@ -313,33 +313,37 @@ function updateParticipantsTable() {
             const packagesForDay = participant.package_per_day[dayIndex] || [];
             let cellHTML = '<div class="car-selection-group">';
 
-            carsForDay.forEach((carPlate, carIndex) => {
-                const allCars = event.available_cars.map(plate => {
-                    const car = cars.find(c => c.license_plate === plate);
-                    return `<option value="${plate}" ${plate === carPlate ? 'selected' : ''}>${car ? `${car.model} (${plate})` : plate}</option>`;
-                }).join('');
+            if (carsForDay.length > 0) {
+                carsForDay.forEach((carPlate, carIndex) => {
+                    const allCars = event.available_cars.map(plate => {
+                        const car = cars.find(c => c.license_plate === plate);
+                        return `<option value="${plate}" ${plate === carPlate ? 'selected' : ''}>${car ? `${car.model} (${plate})` : plate}</option>`;
+                    }).join('');
 
-                const circuit = day.circuit;
-                const packageOptions = circuit && circuit.pricing_type === "per lap" ?
-                    `<option value="basic" ${packagesForDay[carIndex] === 'basic' ? 'selected' : ''}>Basic</option>
-                     <option value="fuel_inc" ${packagesForDay[carIndex] === 'fuel_inc' ? 'selected' : ''}>Fuel-Inc</option>
-                     <option value="all_inc" ${packagesForDay[carIndex] === 'all_inc' ? 'selected' : ''}>All-Inc</option>
-                     ${event.pricing[`${carPlate}_pricing_type`] === 'fixed' ? `<option value="fixed" ${packagesForDay[carIndex] === 'fixed' ? 'selected' : ''}>Fixed Price</option>` : ''}` :
-                    `<option value="basic" ${packagesForDay[carIndex] === 'basic' ? 'selected' : ''}>Basic</option>
-                     <option value="fuel_inc" ${packagesForDay[carIndex] === 'fuel_inc' ? 'selected' : ''}>Fuel-Inc</option>`;
+                    const circuit = day.circuit;
+                    const packageOptions = circuit && circuit.pricing_type === "per lap" ?
+                        `<option value="basic" ${packagesForDay[carIndex] === 'basic' ? 'selected' : ''}>Basic</option>
+                         <option value="fuel_inc" ${packagesForDay[carIndex] === 'fuel_inc' ? 'selected' : ''}>Fuel-Inc</option>
+                         <option value="all_inc" ${packagesForDay[carIndex] === 'all_inc' ? 'selected' : ''}>All-Inc</option>
+                         ${event.pricing[`${carPlate}_pricing_type`] === 'fixed' ? `<option value="fixed" ${packagesForDay[carIndex] === 'fixed' ? 'selected' : ''}>Fixed Price</option>` : ''}` :
+                        `<option value="basic" ${packagesForDay[carIndex] === 'basic' ? 'selected' : ''}>Basic</option>
+                         <option value="fuel_inc" ${packagesForDay[carIndex] === 'fuel_inc' ? 'selected' : ''}>Fuel-Inc</option>`;
 
-                cellHTML += `
-                    <div class="car-selection">
-                        <select id="car_${participantIndex}_${dayIndex}_${carIndex}">
-                            <option value="">Select Car</option>
-                            ${allCars}
-                        </select>
-                        <select id="package_${participantIndex}_${dayIndex}_${carIndex}">
-                            ${packageOptions}
-                        </select>
-                        <button class="remove-car-btn" onclick="this.parentElement.remove()">Remove</button>
-                    </div>`;
-            });
+                    cellHTML += `
+                        <div class="car-selection">
+                            <select id="car_${participantIndex}_${dayIndex}_${carIndex}">
+                                <option value="">Select Car</option>
+                                ${allCars}
+                            </select>
+                            <select id="package_${participantIndex}_${dayIndex}_${carIndex}">
+                                ${packageOptions}
+                            </select>
+                            <button class="remove-car-btn" onclick="this.parentElement.remove()">Remove</button>
+                        </div>`;
+                });
+            } else {
+                cellHTML += '<p>No cars assigned</p>';
+            }
 
             cellHTML += `<button class="add-car-btn" onclick="addCarSelection(${participantIndex}, ${dayIndex})">Add Car</button>`;
             cellHTML += '</div>';
@@ -443,10 +447,10 @@ function addSelectedClients() {
     selectedClients.forEach(selectedClientName => {
         const client = clients.find(c => `${c.name} ${c.surname}` === selectedClientName);
         if (client && !event.participants.some(p => `${p.client.name} ${p.client.surname}` === selectedClientName)) {
-            const carsPerDay = Array(event.days.length).fill([]);
+            const carsPerDay = Array(event.days.length).fill([]); // Empty arrays for each day
             const packagesPerDay = Array(event.days.length).fill([]);
-            const drivenPerDay = Array(event.days.length).fill().map(() => []); // Proper initialization
-            
+            const drivenPerDay = Array(event.days.length).fill().map(() => []);
+
             event.participants.push({
                 client,
                 car_per_day: carsPerDay,
@@ -1079,51 +1083,49 @@ function updateDrivenDataClients() {
     }
     
     const dayIndex = parseInt(drivenDaySelect.value);
+    const drivenDataInputs = document.getElementById('drivenDataInputs');
     drivenDataInputs.innerHTML = '';
     
-    // If no valid day is selected, show a message
     if (isNaN(dayIndex) || dayIndex < 0 || dayIndex >= event.days.length) {
         drivenDataInputs.innerHTML = '<p>Please select a valid day.</p>';
         return;
     }
 
-    // Define circuit first
     const circuit = event.days[dayIndex].circuit;
-    // Define unit after circuit
     const unit = circuit ? (circuit.pricing_type === 'per km' ? 'km' : 'laps') : 'laps';
     
-    // Warn if no circuit is set
     if (!circuit) {
-        drivenDataInputs.innerHTML = '<p>Warning: No circuit set for this day. Assuming laps.</p>';
+        drivenDataInputs.innerHTML += '<p>Warning: No circuit set for this day. Assuming laps.</p>';
     }
 
     event.participants.forEach((participant, participantIndex) => {
         const carsForDay = participant.car_per_day[dayIndex] || [];
         
-        // Initialize driven_per_day if missing
         if (!Array.isArray(participant.driven_per_day)) {
-            participant.driven_per_day = Array(event.days.length).fill(null).map(() => []);
+            participant.driven_per_day = Array(event.days.length).fill().map(() => []);
         }
         if (!Array.isArray(participant.driven_per_day[dayIndex])) {
             participant.driven_per_day[dayIndex] = Array(carsForDay.length).fill(0);
-        } else if (participant.driven_per_day[dayIndex].length < carsForDay.length) {
-            participant.driven_per_day[dayIndex] = participant.driven_per_day[dayIndex].concat(
-                Array(carsForDay.length - participant.driven_per_day[dayIndex].length).fill(0)
-            );
+        } else if (participant.driven_per_day[dayIndex].length !== carsForDay.length) {
+            participant.driven_per_day[dayIndex] = Array(carsForDay.length).fill(0);
         }
 
         let inputsHTML = `
             <h4>${participant.client.name} ${participant.client.surname}</h4>
         `;
-        carsForDay.forEach((carPlate, carIndex) => {
-            const car = cars.find(c => c.license_plate === carPlate);
-            inputsHTML += `
-                <label>${car ? `${car.brand} ${car.model} (${carPlate})` : carPlate} (${unit}): 
-                    <input type="number" min="0" id="drivenValue_${participantIndex}_${carIndex}" 
-                           value="${participant.driven_per_day[dayIndex][carIndex] || 0}">
-                </label><br>
-            `;
-        });
+        if (carsForDay.length > 0) {
+            carsForDay.forEach((carPlate, carIndex) => {
+                const car = cars.find(c => c.license_plate === carPlate);
+                inputsHTML += `
+                    <label>${car ? `${car.brand} ${car.model} (${carPlate})` : carPlate} (${unit}): 
+                        <input type="number" min="0" id="drivenValue_${participantIndex}_${carIndex}" 
+                               value="${participant.driven_per_day[dayIndex][carIndex] || 0}">
+                    </label><br>
+                `;
+            });
+        } else {
+            inputsHTML += '<p>No cars assigned for this day.</p>';
+        }
         drivenDataInputs.innerHTML += inputsHTML;
     });
 }
