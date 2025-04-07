@@ -534,7 +534,6 @@ function saveAllParticipants() {
         if (!Array.isArray(participant.driven_per_day)) {
             participant.driven_per_day = Array(event.days.length).fill().map(() => []);
         } else if (participant.driven_per_day.length !== event.days.length) {
-            // If length doesn't match, recreate the array
             participant.driven_per_day = Array(event.days.length).fill().map((_, i) => 
                 i < participant.driven_per_day.length ? 
                 [...participant.driven_per_day[i]] : 
@@ -562,7 +561,10 @@ function saveAllParticipants() {
                 if (car && packageType) {
                     dayCars.push(car);
                     dayPackages.push(packageType);
-                    if (!event.cars_assigned[dayIndex]) event.cars_assigned[dayIndex] = {};
+                    // Ensure cars_assigned[dayIndex] is initialized
+                    if (!event.cars_assigned[dayIndex]) {
+                        event.cars_assigned[dayIndex] = {};
+                    }
                     event.cars_assigned[dayIndex][car] = `${participant.client.name} ${participant.client.surname}`;
                 }
             });
@@ -574,7 +576,6 @@ function saveAllParticipants() {
             if (!Array.isArray(participant.driven_per_day[dayIndex])) {
                 participant.driven_per_day[dayIndex] = Array(dayCars.length).fill(0);
             } else if (participant.driven_per_day[dayIndex].length < dayCars.length) {
-                // If existing array is shorter than needed, extend it with zeros
                 participant.driven_per_day[dayIndex] = participant.driven_per_day[dayIndex].concat(
                     Array(dayCars.length - participant.driven_per_day[dayIndex].length).fill(0)
                 );
