@@ -558,6 +558,7 @@ function saveAllParticipants() {
                 const car = carElement.value;
                 const packageType = packageElement.value;
 
+                // Only add cars and packages if both are selected
                 if (car && packageType) {
                     dayCars.push(car);
                     dayPackages.push(packageType);
@@ -572,13 +573,12 @@ function saveAllParticipants() {
             carsPerDay.push(dayCars);
             packagesPerDay.push(dayPackages);
 
-            // Ensure driven_per_day[dayIndex] is properly initialized
+            // Ensure driven_per_day[dayIndex] is properly initialized, even if no cars
             if (!Array.isArray(participant.driven_per_day[dayIndex])) {
                 participant.driven_per_day[dayIndex] = Array(dayCars.length).fill(0);
-            } else if (participant.driven_per_day[dayIndex].length < dayCars.length) {
-                participant.driven_per_day[dayIndex] = participant.driven_per_day[dayIndex].concat(
-                    Array(dayCars.length - participant.driven_per_day[dayIndex].length).fill(0)
-                );
+            } else if (participant.driven_per_day[dayIndex].length !== dayCars.length) {
+                // Adjust driven_per_day length to match cars (could be 0 if no cars)
+                participant.driven_per_day[dayIndex] = Array(dayCars.length).fill(0);
             }
         });
 
@@ -586,8 +586,10 @@ function saveAllParticipants() {
         participant.package_per_day = packagesPerDay;
     });
 
-    // Filter out participants with no cars assigned
-    event.participants = event.participants.filter(p => p.car_per_day.some(day => day.length > 0));
+    // Remove the filter that requires cars to be assigned
+    // event.participants = event.participants.filter(p => p.car_per_day.some(day => day.length > 0));
+    // Instead, ensure all participants are kept, even with no cars
+
     saveData();
     updateParticipantsTable();
     alert('Participants saved successfully!');
