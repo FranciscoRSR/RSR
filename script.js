@@ -42,6 +42,24 @@ let currentCircuitIndex = null;
 let selectedClients = new Set();
 
 
+function showModal(modalId) {
+    const modal = document.getElementById(modalId);
+    modal.style.display = 'flex';
+    // Add a small delay before adding the show class for the animation to work
+    setTimeout(() => {
+        modal.classList.add('show');
+    }, 10);
+}
+
+function hideModal(modalId) {
+    const modal = document.getElementById(modalId);
+    modal.classList.remove('show');
+    // Wait for the animation to complete before hiding the modal
+    setTimeout(() => {
+        modal.style.display = 'none';
+    }, 300);
+}
+
 function saveData() {
     if (!db) {
         console.warn("Database not available. Data not saved.");
@@ -221,7 +239,7 @@ function editEvent(index) {
         daysDiv.innerHTML += `<p>Day ${i + 1}: ${day.date}, Circuit: ${day.circuit ? day.circuit.name : 'Not Assigned'}</p>`;
     });
 
-    // Populate the event details buttons
+    // Add the new "Remaining Package" button next to "View Event Overview"
     document.getElementById('eventDetails').innerHTML = `
         <button onclick="showEditEventDetailsForm()">Edit Event Details</button>
         <button onclick="assignCircuits()">Assign Circuits</button>
@@ -231,15 +249,15 @@ function editEvent(index) {
         <button onclick="clientPackage()">Client Package</button>
         <button onclick="processBalances()">Add payments</button>
         <button onclick="viewEvent(${index})">View Event Overview</button>
+        <button onclick="showModelBreakdown(${index})">Model Breakdown</button>
     `;
 
     // Hide the events table and controls, show the edit form
-    document.getElementById('eventsTable').style.display = 'none'; // Directly hide the table
-    document.getElementById('eventsControls').style.display = 'none'; // Hide the "Add Event" button
-    document.getElementById('editEventForm').style.display = 'block'; // Show edit form
-    document.getElementById('addEventForm').style.display = 'none'; // Ensure add form is hidden
+    document.getElementById('eventsTable').style.display = 'none';
+    document.getElementById('eventsControls').style.display = 'none';
+    document.getElementById('editEventForm').style.display = 'block';
+    document.getElementById('addEventForm').style.display = 'none';
 
-    // Ensure all other sub-forms are hidden initially
     hideAllEditForms();
 
     if (document.getElementById('participantsSection')) {
@@ -393,6 +411,7 @@ document.addEventListener('DOMContentLoaded', function() {
     document.getElementById('circuitsBtn').addEventListener('click', () => showSection('circuits'));
     document.getElementById('priceListBtn').addEventListener('click', () => showSection('priceList'));
 });
+
 
 document.getElementById('clientSearch').addEventListener('click', function(e) {
     const dropdown = document.getElementById('clientMultiSelect');
@@ -602,6 +621,7 @@ function hideAllEditForms() {
     document.getElementById('clientPackageForm').style.display = 'none';
     document.getElementById('processBalancesForm').style.display = 'none';
     document.getElementById('overviewForm').style.display = 'none';
+    document.getElementById('modelBreakdownForm').style.display = 'none';
 }
 
 function showEditEventDetailsForm() {
@@ -1829,15 +1849,231 @@ doc.autoTable({
     doc.save(`Event_Overview_${event.name}.pdf`);
 }
 
-// Helper function to format dates as DD/MM
+function CreditUsedModel(participant, event, circuitName, carModel, packageType) {
+    const trackDayIndices = event.days
+        .map((day, idx) => day.circuit && day.circuit.name === circuitName ? idx : -1)
+        .filter(idx => idx !== -1);
+    const circuit = event.days[trackDayIndices[0]]?.circuit;
+    if (!circuit) return 0;
+
+    let totalCredit = 0;
+    const pricing = event.pricing || {};
+
+    trackDayIndices.forEach(dayIdx => {
+        const carsForDay = participant.car_per_day[dayIdx] || [];
+        const packagesForDay = participant.package_per_day[dayIdx] || [];
+        const drivenForDay = participant.driven_per_day[dayIdx] || [];
+
+        carsForDay.forEach((plate, carIdx) => {
+            const car = cars.find(c => c.license_plate === plate);
+            if (!car || `${car.brand} ${car.model}` !== carModel || packagesForDay[carIdx] !== packageType) return;
+
+            const driven = drivenForDay[carIdx] || 0;
+            if (driven <= 0) return;
+
+            const pricingType = pricing[`${plate}_pricing_type`] || 'standard';
+            const extraDiscount = (pricing[`${plate}_extra_discount`] || 0) / 100;
+            const discountScope = pricing[`${plate}_discount_scope`] || 'basic';
+
+            let cost = 0;
+            if (pricingType === 'fixed' && packageType === 'fixed' && circuit.pricing_type === 'per lap') {
+                const fixedPriceLap = pricing[`${plate}_fixed_price_lap`] || 0;
+                cost = fixedPriceLap * driven;
+            } else {
+                const discount = getDiscount(driven, circuit.pricing_type);
+                if (circuit.pricing_type === 'per lap') {
+                    const basicPriceLap = pricing[`${plate}_basic_lap`] !== undefined ? pricing[`${plate}_basic_lap`] : car.basic_price_lap;
+                    const allIncPriceLap = pricing[`${plate}_all_inc_lap`] !== undefined ? pricing[`${plate}_all_inc_lap`] : car.all_inc_price_lap;
+                    let baseCost = basicPriceLap * driven * (1 - discount);
+
+                    if (packageType === 'basic') {
+                        cost = baseCost;
+                    } else if (packageType === 'fuel_inc') {
+                        cost = baseCost + (allIncPriceLap - 35) * driven;
+                    } else if (packageType === 'all_inc') {
+                        cost = baseCost + allIncPriceLap * driven;
+                    }
+                    if (extraDiscount > 0) {
+                        cost = discountScope === 'full' ? cost * (1 - extraDiscount) : baseCost * (1 - extraDiscount) + (cost - baseCost);
+                    }
+                } else if (circuit.pricing_type === 'per km') {
+                    const basicPriceKm = pricing[`${plate}_basic_km`] !== undefined ? pricing[`${plate}_basic_km`] : car.basic_price_km;
+                    const fuelCostKm = pricing[`${plate}_fuel_cost_km`] !== undefined ? pricing[`${plate}_fuel_cost_km`] : car.fuel_cost_km;
+                    let baseCost = basicPriceKm * driven * (1 - discount);
+
+                    if (packageType === 'basic') {
+                        cost = baseCost;
+                    } else if (packageType === 'fuel_inc') {
+                        const fuelMultiplier = (circuitName === 'Nurburgring Nordschleife' || circuitName === 'Spa' || circuitName === 'Nürburgring GP Track') ? 1 : 1.3;
+                        cost = baseCost + (fuelCostKm * fuelMultiplier * driven);
+                    }
+                    if (extraDiscount > 0) {
+                        cost = discountScope === 'full' ? cost * (1 - extraDiscount) : baseCost * (1 - extraDiscount) + (cost - baseCost);
+                    }
+                }
+            }
+            totalCredit += cost;
+        });
+    });
+
+    return Math.round(totalCredit);
+}
+
+function TotalCreditModel(participant, event, circuitName, carModel, packageType) {
+    const trackDayIndices = event.days
+        .map((day, idx) => day.circuit && day.circuit.name === circuitName ? idx : -1)
+        .filter(idx => idx !== -1);
+    if (!trackDayIndices.length) return 0;
+
+    const creditUsed = CreditUsedModel(participant, event, circuitName, carModel, packageType);
+    let relevantPaid = 0;
+
+    trackDayIndices.forEach(dayIdx => {
+        const carsForDay = participant.car_per_day[dayIdx] || [];
+        const packagesForDay = participant.package_per_day[dayIdx] || [];
+        carsForDay.forEach((plate, idx) => {
+            const car = cars.find(c => c.license_plate === plate);
+            if (car && `${car.brand} ${car.model}` === carModel && packagesForDay[idx] === packageType) {
+                relevantPaid += participant.paid_per_day[dayIdx] || 0;
+            }
+        });
+    });
+
+    return Math.round(relevantPaid);
+}
+
+function LapsAvailableModel(participant, event, circuitName, carModel, packageType) {
+    const totalCredit = TotalCreditModel(participant, event, circuitName, carModel, packageType);
+    const circuit = circuits.find(c => c.name === circuitName);
+    if (!circuit) return 0; // No circuit, no calculation
+
+    // Get a representative car for pricing defaults
+    const car = cars.find(c => `${c.brand} ${c.model}` === carModel);
+    if (!car) return 0;
+
+    const pricing = event.pricing || {};
+    const plate = car.license_plate; // Use the first car of this model for pricing
+    const pricingType = pricing[`${plate}_pricing_type`] || 'standard';
+    const unit = circuit.pricing_type === 'per km' ? 'km' : 'laps';
+    const isSpaOrNurburgring = circuitName === 'Nurburgring Nordschleife' || circuitName === 'Spa' || circuitName === 'Nürburgring GP Track';
+
+    // Pricing values with event overrides
+    const basicPriceLap = pricing[`${plate}_basic_lap`] !== undefined ? pricing[`${plate}_basic_lap`] : car.basic_price_lap;
+    const allIncPriceLap = pricing[`${plate}_all_inc_lap`] !== undefined ? pricing[`${plate}_all_inc_lap`] : car.all_inc_price_lap;
+    const basicPriceKm = pricing[`${plate}_basic_km`] !== undefined ? pricing[`${plate}_basic_km`] : car.basic_price_km;
+    const fuelCostKm = pricing[`${plate}_fuel_cost_km`] !== undefined ? pricing[`${plate}_fuel_cost_km`] : car.fuel_cost_km;
+    const fixedPriceLap = pricing[`${plate}_fixed_price_lap`] || 0;
+    const extraDiscount = (pricing[`${plate}_extra_discount`] || 0) / 100;
+    const discountScope = pricing[`${plate}_discount_scope`] || 'basic';
+
+    // Handle fixed pricing
+    if (pricingType === 'fixed' && packageType === 'fixed' && unit === 'laps') {
+        return fixedPriceLap > 0 ? Math.floor(totalCredit / fixedPriceLap) : 0;
+    }
+
+    // Calculate the maximum affordable units (laps or km)
+    let units = 0;
+    let totalCost = 0;
+    
+    while (true) {
+        const nextUnits = units + 1;
+        let costForNextUnit = 0;
+        
+        // Calculate cost for next unit
+        if (unit === 'laps') {
+            const discount = getDiscount(nextUnits, "per lap");
+            let baseCost = basicPriceLap * nextUnits * (1 - discount);
+            
+            if (packageType === 'basic') {
+                costForNextUnit = baseCost;
+            } else if (packageType === 'fuel_inc') {
+                costForNextUnit = baseCost + (allIncPriceLap - 35) * nextUnits;
+            } else if (packageType === 'all_inc') {
+                costForNextUnit = baseCost + allIncPriceLap * nextUnits;
+            }
+            
+            // Apply extra discount
+            if (extraDiscount > 0) {
+                if (discountScope === 'full') {
+                    costForNextUnit *= (1 - extraDiscount);
+                } else {
+                    baseCost *= (1 - extraDiscount);
+                    costForNextUnit = packageType === 'basic' ? baseCost : 
+                                      (packageType === 'fuel_inc' ? baseCost + (allIncPriceLap - 35) * nextUnits : 
+                                      baseCost + allIncPriceLap * nextUnits);
+                }
+            }
+        } 
+        else { // per km
+            const discount = getDiscount(nextUnits, "per km");
+            let baseCost = basicPriceKm * nextUnits * (1 - discount);
+            
+            if (packageType === 'basic') {
+                costForNextUnit = baseCost;
+            } else if (packageType === 'fuel_inc') {
+                const fuelMultiplier = isSpaOrNurburgring ? 1 : 1.3;
+                const baseFuelCost = Math.round(fuelCostKm * 10) / 10;
+                costForNextUnit = baseCost + (baseFuelCost * fuelMultiplier * nextUnits);
+            }
+            
+            // Apply extra discount
+            if (extraDiscount > 0) {
+                if (discountScope === 'full') {
+                    costForNextUnit *= (1 - extraDiscount);
+                } else {
+                    baseCost *= (1 - extraDiscount);
+                    costForNextUnit = packageType === 'basic' ? baseCost : 
+                                      baseCost + (Math.round(fuelCostKm * 10) / 10 * (isSpaOrNurburgring ? 1 : 1.3) * nextUnits);
+                }
+            }
+        }
+        
+        // Check if we can afford this unit
+        if (costForNextUnit > totalCredit) {
+            break;
+        }
+        
+        units = nextUnits;
+        totalCost = costForNextUnit;
+        
+        // Safety check to prevent infinite loops
+        if (units > (unit === 'laps' ? 100 : 1000)) {
+            break;
+        }
+    }
+    
+    return units;
+}
+
+function TotalLapsModel(participant, event, circuitName, carModel, packageType) {
+    const trackDayIndices = event.days
+        .map((day, idx) => day.circuit && day.circuit.name === circuitName ? idx : -1)
+        .filter(idx => idx !== -1);
+    if (!trackDayIndices.length) return 0;
+
+    let totalDriven = 0;
+    trackDayIndices.forEach(dayIdx => {
+        const carsForDay = participant.car_per_day[dayIdx] || [];
+        const packagesForDay = participant.package_per_day[dayIdx] || [];
+        const drivenForDay = participant.driven_per_day[dayIdx] || [];
+
+        carsForDay.forEach((plate, carIdx) => {
+            const car = cars.find(c => c.license_plate === plate);
+            if (car && `${car.brand} ${car.model}` === carModel && packagesForDay[carIdx] === packageType) {
+                totalDriven += drivenForDay[carIdx] || 0;
+            }
+        });
+    });
+
+    return totalDriven;
+}
+
 function formatDate(dateString) {
-    if (!dateString) return '';
     const date = new Date(dateString);
-    if (isNaN(date.getTime())) return '';
     return `${String(date.getDate()).padStart(2, '0')}/${String(date.getMonth() + 1).padStart(2, '0')}`;
 }
 
-    function processBalances() {
+function processBalances() {
     hideAllEditForms();
     const event = events[currentEventIndex];
     const header = document.getElementById('balancesTableHeader');
@@ -2852,4 +3088,79 @@ function exportPriceList() {
     });
 
     doc.save('Price_List.pdf');
+}
+
+
+
+function showModelBreakdown(index) {
+    hideAllEditForms();
+    const event = events[index];
+    const header = document.getElementById('modelBreakdownTableHeader');
+    const tbody = document.getElementById('modelBreakdownTableBody');
+
+    // Define table headers (removed License Plate column since we’re using carModel now)
+    header.innerHTML = `
+        <tr>
+            <th>Client</th>
+            <th>Circuit</th>
+            <th>Car Model</th>
+            <th>Package</th>
+            <th>Credit Used (€)</th>
+            <th>Total Credit (€)</th>
+            <th>Laps/km Available</th>
+            <th>Total Laps/km Driven</th>
+        </tr>
+    `;
+
+    // Populate table body
+    tbody.innerHTML = '';
+    const uniqueCircuits = [...new Set(event.days.map(day => day.circuit ? day.circuit.name : null))].filter(c => c);
+
+    event.participants.forEach(participant => {
+        const clientName = `${participant.client.name} ${participant.client.surname}`;
+        uniqueCircuits.forEach(circuitName => {
+            // Map to track unique car model and package combinations for this participant on this circuit
+            const modelPackageMap = new Map();
+            event.days.forEach((day, dayIdx) => {
+                if (day.circuit && day.circuit.name === circuitName) {
+                    const carsForDay = participant.car_per_day[dayIdx] || [];
+                    const packagesForDay = participant.package_per_day[dayIdx] || [];
+                    carsForDay.forEach((carPlate, idx) => {
+                        const car = cars.find(c => c.license_plate === carPlate);
+                        if (car) {
+                            const carModel = `${car.brand} ${car.model}`;
+                            const packageType = packagesForDay[idx];
+                            if (carModel && packageType) {
+                                modelPackageMap.set(`${carModel}_${packageType}`, { carModel, packageType });
+                            }
+                        }
+                    });
+                }
+            });
+
+            // Generate rows for each car model/package combination
+            modelPackageMap.forEach(({ carModel, packageType }) => {
+                const creditUsed = CreditUsedModel(participant, event, circuitName, carModel, packageType);
+                const totalCredit = TotalCreditModel(participant, event, circuitName, carModel, packageType);
+                const lapsAvailable = LapsAvailableModel(participant, event, circuitName, carModel, packageType);
+                const totalLaps = TotalLapsModel(participant, event, circuitName, carModel, packageType);
+
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td>${clientName}</td>
+                    <td>${circuitName}</td>
+                    <td>${carModel}</td>
+                    <td>${packageType}</td>
+                    <td>€${creditUsed}</td>
+                    <td>€${totalCredit}</td>
+                    <td>${lapsAvailable}</td>
+                    <td>${totalLaps}</td>
+                `;
+                tbody.appendChild(row);
+            });
+        });
+    });
+
+    // Show the form
+    document.getElementById('modelBreakdownForm').style.display = 'block';
 }
