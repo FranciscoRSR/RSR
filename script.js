@@ -2262,7 +2262,7 @@ function LapsAvailableModel(participant, event, circuitName, carModel, packageTy
         totalCost = costForNextUnit;
         
         // Safety check to prevent infinite loops
-        if (units > (unit === 'laps' ? 100 : 1000)) {
+        if (units > (unit === 'laps' ? 300 : 3000)) {
             break;
         }
     }
