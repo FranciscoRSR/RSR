@@ -739,3 +739,54 @@ input[type="checkbox"]:checked::before {
         opacity: 0;
     }
 }
+
+/* Pricing Section Enhancements */
+.expand-pricing-btn {
+    background-color: #E0E0E0;
+    color: var(--primary-color);
+    border: 2px solid var(--primary-color);
+    padding: 6px 12px;
+    font-size: 12px;
+    margin-left: 10px;
+}
+
+.expand-pricing-btn:hover {
+    background-color: #CCCCCC;
+}
+
+.pricing-details {
+    padding: 15px;
+    border: 1px solid var(--border-color);
+    border-radius: 4px;
+    background-color: #F9FAFB;
+    margin-top: 10px;
+}
+
+.discount-schedule {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+    gap: 10px;
+    margin-top: 10px;
+}
+
+.discount-schedule label {
+    margin: 5px 0;
+}
+
+.discount-schedule input {
+    max-width: 100px;
+}
+
+h6 {
+    font-size: 14px;
+    color: var(--primary-color);
+    margin-top: 15px;
+    margin-bottom: 10px;
+    font-weight: 600;
+}
+
+@media (max-width: 768px) {
+    .discount-schedule {
+        grid-template-columns: 1fr;
+    }
+}
