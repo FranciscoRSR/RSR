@@ -321,13 +321,34 @@ function updateParticipantsTable() {
                     }).join('');
 
                     const circuit = day.circuit;
-                    const packageOptions = circuit && circuit.pricing_type === "per lap" ?
-                        `<option value="basic" ${packagesForDay[carIndex] === 'basic' ? 'selected' : ''}>Basic</option>
-                         <option value="fuel_inc" ${packagesForDay[carIndex] === 'fuel_inc' ? 'selected' : ''}>Fuel-Inc</option>
-                         <option value="all_inc" ${packagesForDay[carIndex] === 'all_inc' ? 'selected' : ''}>All-Inc</option>
-                         ${event.pricing[`${carPlate}_pricing_type`] === 'fixed' ? `<option value="fixed" ${packagesForDay[carIndex] === 'fixed' ? 'selected' : ''}>Fixed Price</option>` : ''}` :
-                        `<option value="basic" ${packagesForDay[carIndex] === 'basic' ? 'selected' : ''}>Basic</option>
-                         <option value="fuel_inc" ${packagesForDay[carIndex] === 'fuel_inc' ? 'selected' : ''}>Fuel-Inc</option>`;
+                    const carPricingType = event.pricing[`${carPlate}_pricing_type`] || 'standard';
+                    let packageOptions = '';
+
+                    if (carPricingType === 'fixed_lap' && circuit && circuit.pricing_type === 'per lap') {
+                        packageOptions = `
+                            <option value="fixed" ${packagesForDay[carIndex] === 'fixed' ? 'selected' : ''}>Fixed Price</option>
+                            <option value="basic" ${packagesForDay[carIndex] === 'basic' ? 'selected' : ''}>Basic</option>
+                            <option value="fuel_inc" ${packagesForDay[carIndex] === 'fuel_inc' ? 'selected' : ''}>Fuel-Inc</option>
+                            <option value="all_inc" ${packagesForDay[carIndex] === 'all_inc' ? 'selected' : ''}>All-Inc</option>
+                        `;
+                    } else if (carPricingType === 'fixed_km' && circuit && circuit.pricing_type === 'per km') {
+                        packageOptions = `
+                            <option value="fixed" ${packagesForDay[carIndex] === 'fixed' ? 'selected' : ''}>Fixed Price</option>
+                            <option value="basic" ${packagesForDay[carIndex] === 'basic' ? 'selected' : ''}>Basic</option>
+                            <option value="fuel_inc" ${packagesForDay[carIndex] === 'fuel_inc' ? 'selected' : ''}>Fuel-Inc</option>
+                        `;
+                    } else if (circuit && circuit.pricing_type === "per lap") {
+                        packageOptions = `
+                            <option value="basic" ${packagesForDay[carIndex] === 'basic' ? 'selected' : ''}>Basic</option>
+                            <option value="fuel_inc" ${packagesForDay[carIndex] === 'fuel_inc' ? 'selected' : ''}>Fuel-Inc</option>
+                            <option value="all_inc" ${packagesForDay[carIndex] === 'all_inc' ? 'selected' : ''}>All-Inc</option>
+                        `;
+                    } else {
+                        packageOptions = `
+                            <option value="basic" ${packagesForDay[carIndex] === 'basic' ? 'selected' : ''}>Basic</option>
+                            <option value="fuel_inc" ${packagesForDay[carIndex] === 'fuel_inc' ? 'selected' : ''}>Fuel-Inc</option>
+                        `;
+                    }
 
                     cellHTML += `
                         <div class="car-selection">
@@ -487,15 +508,26 @@ function addCarSelection(participantIndex, dayIndex) {
     const carPlate = event.available_cars[0]; // Default to first available car
     const car = cars.find(c => c.license_plate === carPlate);
     const pricingType = event.pricing && event.pricing[`${carPlate}_pricing_type`];
-    
-    // Determine package options
-    let packageOptions;
-    if (circuit && circuit.pricing_type === "per lap") {
+        
+    let packageOptions = '';
+    if (pricingType === 'fixed_lap' && circuit && circuit.pricing_type === 'per lap') {
+        packageOptions = `
+            <option value="fixed">Fixed Price</option>
+            <option value="basic">Basic</option>
+            <option value="fuel_inc">Fuel-Inc</option>
+            <option value="all_inc">All-Inc</option>
+        `;
+    } else if (pricingType === 'fixed_km' && circuit && circuit.pricing_type === 'per km') {
+        packageOptions = `
+            <option value="fixed">Fixed Price</option>
+            <option value="basic">Basic</option>
+            <option value="fuel_inc">Fuel-Inc</option>
+        `;
+    } else if (circuit && circuit.pricing_type === "per lap") {
         packageOptions = `
             <option value="basic">Basic</option>
             <option value="fuel_inc">Fuel-Inc</option>
             <option value="all_inc">All-Inc</option>
-            ${pricingType === 'fixed' ? '<option value="fixed">Fixed Price</option>' : ''}
         `;
     } else {
         packageOptions = `
@@ -503,7 +535,7 @@ function addCarSelection(participantIndex, dayIndex) {
             <option value="fuel_inc">Fuel-Inc</option>
         `;
     }
-
+    
     const newCarDiv = document.createElement('div');
     newCarDiv.className = 'car-selection';
     newCarDiv.innerHTML = `
@@ -770,32 +802,48 @@ function assignCarsPricing() {
                 return `
                     <div id="pricing_${car.license_plate}" style="display: ${isSelected ? 'block' : 'none'};">
                         <h5>${car.brand} ${car.model} (${car.license_plate})</h5>
-                        <label>
-                            Pricing Type:
-                            <select id="pricingType_${car.license_plate}">
-                                <option value="standard" ${(!event.pricing[`${car.license_plate}_pricing_type`] || event.pricing[`${car.license_plate}_pricing_type`] === 'standard') ? 'selected' : ''}>Standard Calculation</option>
-                                <option value="fixed" ${event.pricing[`${car.license_plate}_pricing_type`] === 'fixed' ? 'selected' : ''}>Fixed Price per Lap</option>
-                            </select>
-                        </label>
-                        <div id="standardPricing_${car.license_plate}">
-                            <label>Basic Price per Lap: <input type="number" id="basicPriceLap_${car.license_plate}" value="${event.pricing[`${car.license_plate}_basic_lap`] !== undefined ? event.pricing[`${car.license_plate}_basic_lap`] : car.basic_price_lap}" step="0.01"></label><br>
-                            <label>All-Inc Price per Lap: <input type="number" id="allIncPriceLap_${car.license_plate}" value="${event.pricing[`${car.license_plate}_all_inc_lap`] !== undefined ? event.pricing[`${car.license_plate}_all_inc_lap`] : car.all_inc_price_lap}" step="0.01"></label><br>
-                            <label>Basic Price per km: <input type="number" id="basicPriceKm_${car.license_plate}" value="${event.pricing[`${car.license_plate}_basic_km`] !== undefined ? event.pricing[`${car.license_plate}_basic_km`] : car.basic_price_km}" step="0.01"></label><br>
-                            <label>Fuel Cost per km: <input type="number" id="fuelCostKm_${car.license_plate}" value="${event.pricing[`${car.license_plate}_fuel_cost_km`] !== undefined ? event.pricing[`${car.license_plate}_fuel_cost_km`] : car.fuel_cost_km}" step="0.01"></label><br>
+                        <button class="expand-pricing-btn" onclick="toggleExpandPricing('${car.license_plate}')">Expand</button>
+                        <div id="pricingDetails_${car.license_plate}" style="display: none;">
                             <label>
-                                Extra Discount (%):
-                                <input type="number" id="extraDiscount_${car.license_plate}" min="0" max="100" value="${event.pricing[`${car.license_plate}_extra_discount`] || 0}" step="1">
-                            </label><br>
-                            <label>
-                                Discount Applies To:
-                                <select id="discountScope_${car.license_plate}">
-                                    <option value="full" ${event.pricing[`${car.license_plate}_discount_scope`] === 'full' ? 'selected' : ''}>Full Price</option>
-                                    <option value="basic" ${(!event.pricing[`${car.license_plate}_discount_scope`] || event.pricing[`${car.license_plate}_discount_scope`] === 'basic') ? 'selected' : ''}>Basic Price Only</option>
+                                Pricing Type:
+                                <select id="pricingType_${car.license_plate}">
+                                    <option value="standard" ${(!event.pricing[`${car.license_plate}_pricing_type`] || event.pricing[`${car.license_plate}_pricing_type`] === 'standard') ? 'selected' : ''}>Standard Calculation</option>
+                                    <option value="fixed_lap" ${event.pricing[`${car.license_plate}_pricing_type`] === 'fixed_lap' ? 'selected' : ''}>Fixed Price per Lap</option>
+                                    <option value="fixed_km" ${event.pricing[`${car.license_plate}_pricing_type`] === 'fixed_km' ? 'selected' : ''}>Fixed Price per km</option>
                                 </select>
                             </label>
-                        </div>
-                        <div id="fixedPricing_${car.license_plate}" style="display: none;">
-                            <label>Fixed Price per Lap: <input type="number" id="fixedPriceLap_${car.license_plate}" value="${event.pricing[`${car.license_plate}_fixed_price_lap`] || ''}" step="0.01"></label><br>
+                            <div id="standardPricing_${car.license_plate}">
+                                <label>Basic Price per Lap: <input type="number" id="basicPriceLap_${car.license_plate}" value="${event.pricing[`${car.license_plate}_basic_lap`] !== undefined ? event.pricing[`${car.license_plate}_basic_lap`] : car.basic_price_lap}" step="0.01"></label><br>
+                                <label>All-Inc Price per Lap: <input type="number" id="allIncPriceLap_${car.license_plate}" value="${event.pricing[`${car.license_plate}_all_inc_lap`] !== undefined ? event.pricing[`${car.license_plate}_all_inc_lap`] : car.all_inc_price_lap}" step="0.01"></label><br>
+                                <label>Basic Price per km: <input type="number" id="basicPriceKm_${car.license_plate}" value="${event.pricing[`${car.license_plate}_basic_km`] !== undefined ? event.pricing[`${car.license_plate}_basic_km`] : car.basic_price_km}" step="0.01"></label><br>
+                                <label>Fuel Cost per km: <input type="number" id="fuelCostKm_${car.license_plate}" value="${event.pricing[`${car.license_plate}_fuel_cost_km`] !== undefined ? event.pricing[`${car.license_plate}_fuel_cost_km`] : car.fuel_cost_km}" step="0.01"></label><br>
+                                <label>Extra Discount (%): <input type="number" id="extraDiscount_${car.license_plate}" min="0" max="100" value="${event.pricing[`${car.license_plate}_extra_discount`] || 0}" step="1"></label><br>
+                                <label>
+                                    Discount Applies To:
+                                    <select id="discountScope_${car.license_plate}">
+                                        <option value="full" ${event.pricing[`${car.license_plate}_discount_scope`] === 'full' ? 'selected' : ''}>Full Price</option>
+                                        <option value="basic" ${(!event.pricing[`${car.license_plate}_discount_scope`] || event.pricing[`${car.license_plate}_discount_scope`] === 'basic') ? 'selected' : ''}>Basic Price Only</option>
+                                    </select>
+                                </label>
+                                <h6>Discount Schedule (Per Lap):</h6>
+                                ${[3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20].map(laps => `
+                                    <label>${laps} Lap${laps > 1 ? 's' : ''}: 
+                                        <input type="number" id="discountLap_${car.license_plate}_${laps}" value="${(event.pricing[`${car.license_plate}_discount_lap_${laps}`] !== undefined ? event.pricing[`${car.license_plate}_discount_lap_${laps}`] : getDiscount(laps, 'per lap')) * 100}" min="0" max="100" step="0.1">%
+                                    </label><br>
+                                `).join('')}
+                                <h6>Discount Schedule (Per km):</h6>
+                                ${[170, 200, 250, 300, 400].map(km => `
+                                    <label>${km} km: 
+                                        <input type="number" id="discountKm_${car.license_plate}_${km}" value="${(event.pricing[`${car.license_plate}_discount_km_${km}`] !== undefined ? event.pricing[`${car.license_plate}_discount_km_${km}`] : getDiscount(km, 'per km')) * 100}" min="0" max="100" step="0.1">%
+                                    </label><br>
+                                `).join('')}
+                            </div>
+                            <div id="fixedLapPricing_${car.license_plate}" style="display: none;">
+                                <label>Fixed Price per Lap: <input type="number" id="fixedPriceLap_${car.license_plate}" value="${event.pricing[`${car.license_plate}_fixed_price_lap`] || ''}" step="0.01"></label><br>
+                            </div>
+                            <div id="fixedKmPricing_${car.license_plate}" style="display: none;">
+                                <label>Fixed Price per km: <input type="number" id="fixedPriceKm_${car.license_plate}" value="${event.pricing[`${car.license_plate}_fixed_price_km`] || ''}" step="0.01"></label><br>
+                            </div>
                         </div>
                     </div>
                 `;
@@ -808,21 +856,31 @@ function assignCarsPricing() {
         const pricingTypeSelect = document.getElementById(`pricingType_${car.license_plate}`);
         if (pricingTypeSelect) {
             pricingTypeSelect.addEventListener('change', function() {
-                const licensePlate = car.license_plate;
+                const plate = car.license_plate;
                 const pricingType = this.value;
-                document.getElementById(`standardPricing_${licensePlate}`).style.display = pricingType === 'standard' ? 'block' : 'none';
-                document.getElementById(`fixedPricing_${licensePlate}`).style.display = pricingType === 'fixed' ? 'block' : 'none';
+                document.getElementById(`standardPricing_${plate}`).style.display = pricingType === 'standard' ? 'block' : 'none';
+                document.getElementById(`fixedLapPricing_${plate}`).style.display = pricingType === 'fixed_lap' ? 'block' : 'none';
+                document.getElementById(`fixedKmPricing_${plate}`).style.display = pricingType === 'fixed_km' ? 'block' : 'none';
             });
             
             // Initialize display based on current selection
             const pricingType = event.pricing[`${car.license_plate}_pricing_type`] || 'standard';
             document.getElementById(`standardPricing_${car.license_plate}`).style.display = pricingType === 'standard' ? 'block' : 'none';
-            document.getElementById(`fixedPricing_${car.license_plate}`).style.display = pricingType === 'fixed' ? 'block' : 'none';
+            document.getElementById(`fixedLapPricing_${car.license_plate}`).style.display = pricingType === 'fixed_lap' ? 'block' : 'none';
+            document.getElementById(`fixedKmPricing_${car.license_plate}`).style.display = pricingType === 'fixed_km' ? 'block' : 'none';
         }
     });
 
     document.getElementById('assignCarsPricingForm').style.display = 'block';
     updateSelectAllButton();
+}
+
+function toggleExpandPricing(licensePlate) {
+    const details = document.getElementById(`pricingDetails_${licensePlate}`);
+    const button = document.querySelector(`#pricing_${licensePlate} .expand-pricing-btn`);
+    const isExpanded = details.style.display === 'none';
+    details.style.display = isExpanded ? 'block' : 'none';
+    button.setAttribute('aria-expanded', isExpanded ? 'true' : 'false');
 }
 
 function toggleSelectAll() {
@@ -923,7 +981,6 @@ function saveCarsPricing() {
             event.pricing[`${car.license_plate}_pricing_type`] = pricingType;
 
             if (pricingType === 'standard') {
-                // Get standard pricing values
                 const basicPriceLap = document.getElementById(`basicPriceLap_${car.license_plate}`).value;
                 const allIncPriceLap = document.getElementById(`allIncPriceLap_${car.license_plate}`).value;
                 const basicPriceKm = document.getElementById(`basicPriceKm_${car.license_plate}`).value;
@@ -937,10 +994,30 @@ function saveCarsPricing() {
                 if (fuelCostKm !== '') event.pricing[`${car.license_plate}_fuel_cost_km`] = parseFloat(fuelCostKm);
                 event.pricing[`${car.license_plate}_extra_discount`] = parseInt(extraDiscount) || 0;
                 event.pricing[`${car.license_plate}_discount_scope`] = discountScope;
-            } else {
-                // Get fixed price per lap
+
+                // Save custom discounts for per lap
+                [3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20].forEach(laps => {
+                    const discountInput = document.getElementById(`discountLap_${car.license_plate}_${laps}`);
+                    if (discountInput) {
+                        const discountValue = parseFloat(discountInput.value) / 100;
+                        event.pricing[`${car.license_plate}_discount_lap_${laps}`] = discountValue;
+                    }
+                });
+
+                // Save custom discounts for per km
+                [170, 200, 250, 300, 400].forEach(km => {
+                    const discountInput = document.getElementById(`discountKm_${car.license_plate}_${km}`);
+                    if (discountInput) {
+                        const discountValue = parseFloat(discountInput.value) / 100;
+                        event.pricing[`${car.license_plate}_discount_km_${km}`] = discountValue;
+                    }
+                });
+            } else if (pricingType === 'fixed_lap') {
                 const fixedPriceLap = document.getElementById(`fixedPriceLap_${car.license_plate}`).value;
                 if (fixedPriceLap !== '') event.pricing[`${car.license_plate}_fixed_price_lap`] = parseFloat(fixedPriceLap);
+            } else if (pricingType === 'fixed_km') {
+                const fixedPriceKm = document.getElementById(`fixedPriceKm_${car.license_plate}`).value;
+                if (fixedPriceKm !== '') event.pricing[`${car.license_plate}_fixed_price_km`] = parseFloat(fixedPriceKm);
             }
         }
     });
@@ -1176,6 +1253,19 @@ function saveDrivenData() {
 
 // Discount calculation
 function getDiscount(driven, pricingType) {
+    if (currentEventIndex !== null && events[currentEventIndex] && events[currentEventIndex].pricing) {
+        const event = events[currentEventIndex];
+        const carPlate = arguments[2]; // Optional third argument for car-specific discounts
+        if (carPlate && event.pricing[`${carPlate}_pricing_type`] === 'standard') {
+            if (pricingType === "per lap") {
+                const customDiscount = event.pricing[`${carPlate}_discount_lap_${driven}`];
+                if (customDiscount !== undefined) return customDiscount;
+            } else {
+                const customDiscount = event.pricing[`${carPlate}_discount_km_${driven}`];
+                if (customDiscount !== undefined) return customDiscount;
+            }
+        }
+    }
     if (pricingType === "per lap") {
         if (driven <= 3) return 0;
         else if (driven === 4) return 0.05;
@@ -1330,8 +1420,12 @@ function calculateCircuitCredit(participant, event, trackDayIndices, circuit) {
         const pricing = event.pricing || {};
         const pricingType = pricing[`${group.pricing.license_plate}_pricing_type`] || 'standard';
 
-        if (pricingType === 'fixed' && group.package === 'fixed' && circuit.pricing_type === "per lap") {
-            // Fixed price calculation - simple multiplication
+        if (pricingType === 'fixed_km' && group.package === 'fixed' && circuit.pricing_type === "per km") {
+            // Fixed price per km calculation
+            const fixedPricePerKm = pricing[`${group.pricing.license_plate}_fixed_price_km`] || 0;
+            carCost = driven * fixedPricePerKm;
+        } else if (pricingType === 'fixed_lap' && group.package === 'fixed' && circuit.pricing_type === "per lap") {
+            // Fixed price per lap calculation
             const fixedPricePerLap = pricing[`${group.pricing.license_plate}_fixed_price_lap`] || 0;
             carCost = driven * fixedPricePerLap;
         } else {
@@ -1363,7 +1457,7 @@ function calculateCircuitCredit(participant, event, trackDayIndices, circuit) {
                     carCost = carCost * (1 - extraDiscount);
                 }
             } else {
-                // Per km calculation (existing logic)
+                // Per km calculation
                 const basicCostPerKm = pricing[`${group.pricing.license_plate}_basic_km`] || group.pricing.basic_price_km || 0;
                 const fuelCostPerKm = pricing[`${group.pricing.license_plate}_fuel_cost_km`] || group.pricing.fuel_cost_km || 0;
                 const extraDiscount = (pricing[`${group.pricing.license_plate}_extra_discount`] || 0) / 100;
@@ -1428,9 +1522,11 @@ function viewEvent(index) {
     Object.entries(circuitGroups).forEach(([circuitName, group], idx) => {
         const dayCount = group.days.length;
         const hasMultipleDays = dayCount > 1;
+        const isSingleTrack = Object.keys(circuitGroups).length === 1; // Check if there's only one track for the whole event
+        
         const baseCols = 1 + dayCount;
         const usageCols = hasMultipleDays ? dayCount + 1 : 1;
-        const summaryCols = 2;
+        const summaryCols = isSingleTrack ? 0 : 2; // Only show credit/balance columns if multiple tracks
         const totalCircuitCols = baseCols + usageCols + summaryCols;
 
         const headerColor = circuitColors[circuitName] || `hsl(${idx * 60}, 50%, 80%)`;
@@ -1456,9 +1552,13 @@ function viewEvent(index) {
                 });
             }
         });
-        headerRows[1].push({ content: `Total ${group.pricingType === 'per lap' ? 'Laps' : 'Km'}`, styles: { halign: 'center', backgroundColor: headerColor } });
-        headerRows[1].push({ content: 'Credit Used', styles: { halign: 'center', backgroundColor: headerColor } });
-        headerRows[1].push({ content: 'Balance Track', styles: { halign: 'center', backgroundColor: headerColor } });
+        if (!isSingleTrack) {
+            headerRows[1].push({ content: `Total ${group.pricingType === 'per lap' ? 'Laps' : 'Km'}`, styles: { halign: 'center', backgroundColor: headerColor } });
+            headerRows[1].push({ content: 'Credit Used', styles: { halign: 'center', backgroundColor: headerColor } });
+            headerRows[1].push({ content: 'Balance Track', styles: { halign: 'center', backgroundColor: headerColor } });
+        } else {
+            headerRows[1].push({ content: `Total ${group.pricingType === 'per lap' ? 'Laps' : 'Km'}`, styles: { halign: 'center', backgroundColor: headerColor } });
+        }
 
         currentColIndex += totalCircuitCols;
     });
@@ -1497,13 +1597,13 @@ function viewEvent(index) {
         header.appendChild(tr);
     });
 
-    // Rest of the function (tbody) remains unchanged
     tbody.innerHTML = '';
     event.participants.forEach(participant => {
         const row = document.createElement('tr');
         let rowHTML = `<td>${participant.client.name} ${participant.client.surname}</td>`;
         let totalPaid = 0;
         let totalCreditUsed = 0;
+        const isSingleTrack = Object.keys(circuitGroups).length === 1;
 
         Object.entries(circuitGroups).forEach(([circuitName, group]) => {
             const trackDayIndices = group.days.map(d => d.index);
@@ -1547,9 +1647,11 @@ function viewEvent(index) {
             ).map(([key, driven]) => `${driven} (${key.split('_')[1]})`).join(', ');
             rowHTML += `<td>${totalDrivenString || '0'}</td>`;
             
-            rowHTML += `<td>€${Math.round(circuitCreditUsed)}</td>`;
-            const balanceTrack = Math.round(paidTrack - circuitCreditUsed);
-            rowHTML += `<td style="background-color: ${balanceTrack < 0 ? '#FF9999' : 'inherit'}">€${balanceTrack}</td>`;
+            if (!isSingleTrack) {
+                rowHTML += `<td>€${Math.round(circuitCreditUsed)}</td>`;
+                const balanceTrack = Math.round(paidTrack - circuitCreditUsed);
+                rowHTML += `<td style="background-color: ${balanceTrack < 0 ? '#FF9999' : 'inherit'}">€${balanceTrack}</td>`;
+            }
         });
 
         const finalBalance = Math.round(totalPaid - totalCreditUsed);
@@ -1572,7 +1674,6 @@ function generateEventOverviewPDF() {
     const { jsPDF } = window.jspdf;
     const doc = new jsPDF({ orientation: 'landscape' });
 
-    // First page (unchanged)
     doc.setFontSize(16);
     doc.text(`Event Overview - ${event.name}`, 14, 20);
 
@@ -1595,10 +1696,16 @@ function generateEventOverviewPDF() {
     let headers = [[], []];
     headers[0].push({ content: 'Customer', colSpan: 1, rowSpan: 2 });
 
+    const isSingleTrack = Object.keys(circuitGroups).length === 1;
+
     Object.entries(circuitGroups).forEach(([circuitName, group], idx) => {
         const dayCount = group.days.length;
         const hasMultipleDays = dayCount > 1;
-        const totalCircuitCols = 1 + dayCount + (hasMultipleDays ? dayCount + 1 : 1) + 2;
+        const baseCols = 1 + dayCount;
+        const usageCols = hasMultipleDays ? dayCount + 1 : 1;
+        const summaryCols = isSingleTrack ? 0 : 2; // Only show credit/balance columns if multiple tracks
+        const totalCircuitCols = baseCols + usageCols + summaryCols;
+
         headers[0].push({ content: circuitName, colSpan: totalCircuitCols });
         headers[1].push('Paid Track');
         group.days.forEach(day => {
@@ -1607,8 +1714,10 @@ function generateEventOverviewPDF() {
             if (hasMultipleDays) headers[1].push(`${group.pricingType === 'per lap' ? 'Laps' : 'Km'} (${formattedDate})`);
         });
         headers[1].push(`Total ${group.pricingType === 'per lap' ? 'Laps' : 'Km'}`);
-        headers[1].push('Credit Used');
-        headers[1].push('Balance Track');
+        if (!isSingleTrack) {
+            headers[1].push('Credit Used');
+            headers[1].push('Balance Track');
+        }
     });
 
     headers[0].push({ content: 'Summary', colSpan: 4 });
@@ -1670,12 +1779,14 @@ function generateEventOverviewPDF() {
             row.push(totalDrivenString || '0');
             colIndex++;
 
-            row.push(`€${Math.round(circuitCreditUsed)}`);
-            colIndex++;
-            const balanceTrack = Math.round(paidTrack - circuitCreditUsed);
-            row.push(`€${balanceTrack}`);
-            if (balanceTrack < 0) columnStyles[colIndex] = { fillColor: [255, 153, 153] };
-            colIndex++;
+            if (!isSingleTrack) {
+                row.push(`€${Math.round(circuitCreditUsed)}`);
+                colIndex++;
+                const balanceTrack = Math.round(paidTrack - circuitCreditUsed);
+                row.push(`€${balanceTrack}`);
+                if (balanceTrack < 0) columnStyles[colIndex] = { fillColor: [255, 153, 153] };
+                colIndex++;
+            }
         });
 
         row.push(`€${Math.round(totalPaid)}`);
@@ -1684,8 +1795,11 @@ function generateEventOverviewPDF() {
         colIndex++;
         const finalBalance = Math.round(totalPaid - totalCreditUsed);
         row.push(`€${finalBalance}`);
-        if (finalBalance < 0) columnStyles[colIndex] = { fillColor: [255, 153, 153] };
-        colIndex++;
+        if (finalBalance < 0) {
+            columnStyles[colIndex] = { fillColor: [255, 153, 153] }; // Red for negative
+        } else if (finalBalance > 0) {
+            columnStyles[colIndex] = { fillColor: [144, 238, 144] }; // Green for positive
+        } // No color for zero
         row.push(participant.paid_status ? 'Yes' : 'No');
         colIndex++;
 
@@ -1744,111 +1858,103 @@ function generateEventOverviewPDF() {
         margin: { top: 25, left: 5, right: 5, bottom: 10 }
     });
 
-// Add second page with payment details (optimized width and margins)
-doc.addPage('portrait');
-doc.setFontSize(14);
-doc.text(`Payment Details - ${event.name}`, 10, 10); // Adjusted position for narrow margin
+    // Rest of the PDF generation code remains the same...
+    doc.addPage('portrait');
+    doc.setFontSize(14);
+    doc.text(`Payment Details - ${event.name}`, 10, 10);
 
-// Very narrow margins (5mm)
-const margin = 5;
-const pageWidth = doc.internal.pageSize.width - margin * 2;
+    const margin = 5;
+    const pageWidth = doc.internal.pageSize.width - margin * 2;
 
-// Prepare payment details table
-let paymentData = [];
-let totalPayments = 0;
+    let paymentData = [];
+    let totalPayments = 0;
 
-// Process payments (same as before)
-event.participants.forEach(participant => {
-    const clientName = `${participant.client.name} ${participant.client.surname}`;
+    event.participants.forEach(participant => {
+        const clientName = `${participant.client.name} ${participant.client.surname}`;
 
-    // Package payments
-    if (participant.package_payment) {
-        Object.entries(participant.package_payment).forEach(([circuit, amount]) => {
-            if (amount !== 0) {
+        if (participant.package_payment) {
+            Object.entries(participant.package_payment).forEach(([circuit, amount]) => {
+                if (amount !== 0) {
+                    paymentData.push([
+                        clientName,
+                        `€${Math.round(amount)}`,
+                        'Package',
+                        circuit,
+                        '',
+                        'Initial package'
+                    ]);
+                    totalPayments += amount;
+                }
+            });
+        }
+
+        if (participant.payment_details?.length > 0) {
+            participant.payment_details.forEach(payment => {
                 paymentData.push([
                     clientName,
-                    `€${Math.round(amount)}`,
-                    'Package',
-                    circuit,
-                    '',
-                    'Initial package'
+                    `€${Math.round(payment.amount)}`,
+                    payment.method,
+                    payment.circuit || 'All',
+                    payment.date,
+                    payment.observation || ''
                 ]);
-                totalPayments += amount;
+                totalPayments += payment.amount;
+            });
+        }
+    });
+
+    const colWidths = {
+        0: pageWidth * 0.25,
+        1: pageWidth * 0.15,
+        2: pageWidth * 0.12,
+        3: pageWidth * 0.15,
+        4: pageWidth * 0.13,
+        5: pageWidth * 0.20
+    };
+
+    doc.autoTable({
+        startY: 15,
+        head: [['Customer', 'Amount', 'Type', 'Circuit', 'Date', 'Observation']],
+        body: paymentData,
+        theme: 'grid',
+        styles: { fontSize: 7, cellPadding: 1.5, overflow: 'linebreak' },
+        headStyles: { fillColor: [26, 42, 68], fontSize: 8, cellPadding: 2 },
+        columnStyles: {
+            0: { halign: 'left' },
+            1: { halign: 'right' },
+            2: { halign: 'center' },
+            3: { halign: 'center' },
+            4: { halign: 'center' },
+            5: { halign: 'left' }
+        },
+        margin: { top: margin, left: margin, right: margin, bottom: margin },
+        willDrawCell: function(data) {
+            if (data.column.index === 1 && data.section === 'body') {
+                const amount = parseFloat(data.cell.text[0].replace('€', '').replace(',', ''));
+                if (amount < 0) {
+                    doc.setFillColor(255, 153, 153);
+                    doc.rect(data.cell.x, data.cell.y, data.cell.width, data.cell.height, 'F');
+                    doc.setTextColor(0, 0, 0);
+                }
             }
-        });
-    }
-
-    // Extra payments
-    if (participant.payment_details?.length > 0) {
-        participant.payment_details.forEach(payment => {
-            paymentData.push([
-                clientName,
-                `€${Math.round(payment.amount)}`,
-                payment.method,
-                payment.circuit || 'All',
-                payment.date,
-                payment.observation || ''
-            ]);
-            totalPayments += payment.amount;
-        });
-    }
-});
-
-// Column width distribution (using nearly full page width)
-const colWidths = {
-    0: pageWidth * 0.25, // Customer (25%)
-    1: pageWidth * 0.15, // Amount (15%)
-    2: pageWidth * 0.12, // Type (12%)
-    3: pageWidth * 0.15, // Circuit (15%)
-    4: pageWidth * 0.13, // Date (13%)
-    5: pageWidth * 0.20  // Observation (20%)
-};
-
-doc.autoTable({
-    startY: 15,
-    head: [['Customer', 'Amount', 'Type', 'Circuit', 'Date', 'Observation']],
-    body: paymentData,
-    theme: 'grid',
-    styles: { fontSize: 7, cellPadding: 1.5, overflow: 'linebreak' },
-    headStyles: { fillColor: [26, 42, 68], fontSize: 8, cellPadding: 2 },
-    columnStyles: { // Remove fixed widths, let jsPDF calculate
-        0: { halign: 'left' },
-        1: { halign: 'right' },
-        2: { halign: 'center' },
-        3: { halign: 'center' },
-        4: { halign: 'center' },
-        5: { halign: 'left' }
-    },
-    margin: { top: margin, left: margin, right: margin, bottom: margin },
-    willDrawCell: function(data) {
-        // Highlight negative amounts in red
-        if (data.column.index === 1 && data.section === 'body') {
-            const amount = parseFloat(data.cell.text[0].replace('€', '').replace(',', ''));
-            if (amount < 0) {
-                doc.setFillColor(255, 153, 153);
-                doc.rect(data.cell.x, data.cell.y, data.cell.width, data.cell.height, 'F');
+        },
+        didDrawPage: function(data) {
+            if (data.pageCount === data.pageNumber) {
+                const totalY = doc.internal.pageSize.height - margin;
+                const totalText = `Total Payments: €${Math.round(totalPayments)}`;
+                
+                if (totalPayments < 0) {
+                    const textWidth = doc.getStringUnitWidth(totalText) * doc.internal.getFontSize() / doc.internal.scaleFactor;
+                    doc.setFillColor(255, 153, 153);
+                    doc.rect(margin, totalY - 6, textWidth + 4, 6, 'F');
+                }
+                
                 doc.setTextColor(0, 0, 0);
+                doc.setFontSize(9);
+                doc.text(totalText, margin, totalY);
             }
         }
-    },
-    didDrawPage: function(data) {
-        // Add total at bottom with red background if negative
-        if (data.pageCount === data.pageNumber) {
-            const totalY = doc.internal.pageSize.height - margin;
-            const totalText = `Total Payments: €${Math.round(totalPayments)}`;
-            
-            if (totalPayments < 0) {
-                const textWidth = doc.getStringUnitWidth(totalText) * doc.internal.getFontSize() / doc.internal.scaleFactor;
-                doc.setFillColor(255, 153, 153);
-                doc.rect(margin, totalY - 6, textWidth + 4, 6, 'F');
-            }
-            
-            doc.setTextColor(0, 0, 0);
-            doc.setFontSize(9);
-            doc.text(totalText, margin, totalY);
-        }
-    }
-});
+    });
 
     doc.save(`Event_Overview_${event.name}.pdf`);
 }
@@ -2166,16 +2272,27 @@ function LapsAvailableModel(participant, event, circuitName, carModel, packageTy
 
     // Check if any car of this model has fixed pricing
     const carsOfModel = cars.filter(c => `${c.brand} ${c.model}` === carModel);
-    const fixedPricingCar = carsOfModel.find(car => {
+    const fixedLapPricingCar = carsOfModel.find(car => {
         const plate = car.license_plate;
-        return event.pricing && event.pricing[`${plate}_pricing_type`] === 'fixed';
+        return event.pricing && event.pricing[`${plate}_pricing_type`] === 'fixed_lap';
+    });
+    const fixedKmPricingCar = carsOfModel.find(car => {
+        const plate = car.license_plate;
+        return event.pricing && event.pricing[`${plate}_pricing_type`] === 'fixed_km';
     });
 
-    // If any car of this model has fixed pricing and package is fixed, use fixed price calculation
-    if (fixedPricingCar && packageType === 'fixed' && circuit.pricing_type === 'per lap') {
-        const plate = fixedPricingCar.license_plate;
+    // If any car of this model has fixed lap pricing and package is fixed, and circuit is per lap
+    if (fixedLapPricingCar && packageType === 'fixed' && circuit.pricing_type === 'per lap') {
+        const plate = fixedLapPricingCar.license_plate;
         const fixedPriceLap = event.pricing[`${plate}_fixed_price_lap`] || 0;
         return fixedPriceLap > 0 ? Math.floor(totalCredit / fixedPriceLap) : 0;
+    }
+
+    // If any car of this model has fixed km pricing and package is fixed, and circuit is per km
+    if (fixedKmPricingCar && packageType === 'fixed' && circuit.pricing_type === 'per km') {
+        const plate = fixedKmPricingCar.license_plate;
+        const fixedPriceKm = event.pricing[`${plate}_fixed_price_km`] || 0;
+        return fixedPriceKm > 0 ? Math.floor(totalCredit / fixedPriceKm) : 0;
     }
 
     // Get a representative car for pricing defaults
