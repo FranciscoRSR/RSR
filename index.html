@@ -12,7 +12,7 @@
     <body>
         <header>
             <div class="logo">
-                    <img src="https://rsrbooking.com/assets/rsr-nurburg+spa-logo.svg" alt="RSR Logo">
+                <img src="https://rsrbooking.com/assets/rsr-nurburg+spa-logo.svg" alt="RSR Logo">
             </div>
             <nav class="main-nav">
                 <button id="eventsBtn">Events</button>
@@ -20,6 +20,13 @@
                 <button id="carsBtn">Cars</button>
                 <button id="circuitsBtn">Circuits</button>
                 <button id="priceListBtn">Price List</button>
+                <div class="theme-toggle">
+                    <input type="checkbox" id="themeSwitch" aria-label="Toggle dark mode">
+                    <label for="themeSwitch" class="theme-switch">
+                        <span class="sun-icon">☀️</span>
+                        <span class="moon-icon">🌙</span>
+                    </label>
+                </div>
             </nav>
         </header>
     
@@ -283,7 +290,7 @@
     
             <!-- Circuits Section -->
             <div id="circuits" class="section">
-                <h1>Circuits</h1>
+                <h1>Circuits</h2>
                 <button onclick="showAddCircuitForm()">Add Circuit</button>
                 <button onclick="showImportCircuitsForm()">Import Circuits</button>
                     <div class="table-container">
@@ -363,7 +370,5 @@
                 <!-- Dynamic content will be inserted here -->
             </div>
         </div>
-        <script type="text/javascript">
-            (function(){/* Cloudflare script */})();
-        </script>
+    </body>
 </html>
