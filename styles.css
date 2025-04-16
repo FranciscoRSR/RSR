@@ -6,42 +6,69 @@
 }
 
 :root {
-    --primary-color: #1A2A44;
-    --secondary-color: #FF6666;
-    --secondary-hover: #FF4D4D;
-    --light-gray: #F5F6F5;
-    --white: #FFFFFF;
-    --border-color: #E0E0E0;
-    --text-color: #333333;
-    --shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
-    --transition: all 0.3s ease;
+    /* Light theme variables */
+    --background-color: #f4f4f4;
+    --text-color: #333;
+    --header-bg: #ffffff;
+    --header-text: #000;
+    --button-bg: #007bff;
+    --button-text: #fff;
+    --button-hover-bg: #0056b3;
+    --table-bg: #fff;
+    --table-border: #ddd;
+    --table-header-bg: #f8f9fa;
+    --input-bg: #fff;
+    --input-border: #ccc;
+    --modal-bg: #fff;
+    --modal-shadow: rgba(0, 0, 0, 0.2);
+    --form-bg: #fff;
+    --form-border: #ddd;
+    --accent-color: #007bff;
+    --error-bg: #FF9999;
+    --success-bg: #98FB98;
+}
+
+[data-theme="dark"] {
+    /* Dark theme variables */
+    --background-color: #1a1a1a;
+    --text-color: #e0e0e0;
+    --header-bg: #2c2c2c;
+    --header-text: #ffffff;
+    --button-bg: #4a90e2;
+    --button-text: #fff;
+    --button-hover-bg: #357abd;
+    --table-bg: #2c2c2c;
+    --table-border: #444;
+    --table-header-bg: #3a3a3a;
+    --input-bg: #333;
+    --input-border: #555;
+    --modal-bg: #2c2c2c;
+    --modal-shadow: rgba(0, 0, 0, 0.5);
+    --form-bg: #2c2c2c;
+    --form-border: #444;
+    --accent-color: #4a90e2;
+    --error-bg: #cc6666;
+    --success-bg: #66cc66;
 }
 
 body {
-    font-family: 'Arial', sans-serif;
-    background-color: var(--light-gray);
-    color: var(--primary-color);
-    line-height: 1.6;
-    min-height: 100vh;
-    display: flex;
-    flex-direction: column;
-    padding-top: 90px;
+    font-family: Arial, sans-serif;
+    margin: 0;
+    padding: 0;
+    background-color: var(--background-color);
+    color: var(--text-color);
+    transition: background-color 0.3s, color 0.3s;
 }
 
 /* Header */
 header {
-    position: fixed;
-    top: 0;
-    width: 100%;
-    min-height: 90px;
-    z-index: 1000;
-    background-color: var(--primary-color);
-    padding: 20px 10px;
+    background-color: var(--header-bg);
+    color: var(--header-text);
+    padding: 1rem;
+    box-shadow: 0 2px 4px var(--modal-shadow);
     display: flex;
     justify-content: space-between;
     align-items: center;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
-    transition: var(--transition);
 }
 
 .logo img {
