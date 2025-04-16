@@ -67,6 +67,9 @@ function initializeTheme() {
     }
 }
 
+themeToggle.addEventListener('change', toggleTheme);
+document.addEventListener('DOMContentLoaded', initializeTheme);
+
 function showModal(modalId) {
     const modal = document.getElementById(modalId);
     modal.style.display = 'flex';
@@ -454,16 +457,13 @@ document.addEventListener('click', function(event) {
     }
 });
 
-document.addEventListener('DOMContentLoaded', initializeTheme);
-themeToggle.addEventListener('change', toggleTheme);
-
-document.addEventListener('DOMContentLoaded', function() {
-    document.getElementById('eventsBtn').addEventListener('click', () => showSection('events'));
-    document.getElementById('clientsBtn').addEventListener('click', () => showSection('clients'));
-    document.getElementById('carsBtn').addEventListener('click', () => showSection('cars'));
-    document.getElementById('circuitsBtn').addEventListener('click', () => showSection('circuits'));
-    document.getElementById('priceListBtn').addEventListener('click', () => showSection('priceList'));
-});
+// document.addEventListener('DOMContentLoaded', function() {
+//     document.getElementById('eventsBtn').addEventListener('click', () => showSection('events'));
+//     document.getElementById('clientsBtn').addEventListener('click', () => showSection('clients'));
+//     document.getElementById('carsBtn').addEventListener('click', () => showSection('cars'));
+//     document.getElementById('circuitsBtn').addEventListener('click', () => showSection('circuits'));
+//     document.getElementById('priceListBtn').addEventListener('click', () => showSection('priceList'));
+// });
 
 
 document.getElementById('clientSearch').addEventListener('click', function(e) {
