@@ -447,6 +447,8 @@ document.addEventListener('DOMContentLoaded', function() {
     document.getElementById('carsBtn').addEventListener('click', () => showSection('cars'));
     document.getElementById('circuitsBtn').addEventListener('click', () => showSection('circuits'));
     document.getElementById('priceListBtn').addEventListener('click', () => showSection('priceList'));
+    document.getElementById('themeSwitch').addEventListener('change', toggleTheme);
+    initializeTheme();
 });
 
 
