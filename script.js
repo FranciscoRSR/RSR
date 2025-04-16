@@ -41,17 +41,30 @@ let currentCarIndex = null;
 let currentCircuitIndex = null;
 let selectedClients = new Set();
 
-function initializeTheme() {
-    const savedTheme = localStorage.getItem('theme') || 'light';
-    document.documentElement.setAttribute('data-theme', savedTheme);
-    document.getElementById('themeSwitch').checked = savedTheme === 'dark';
-}
+// Add this at the top of script.js
+const themeToggle = document.getElementById('themeToggle');
+const prefersDarkScheme = window.matchMedia('(prefers-color-scheme: dark)');
 
 function toggleTheme() {
-    const isDark = document.getElementById('themeSwitch').checked;
-    const theme = isDark ? 'dark' : 'light';
-    document.documentElement.setAttribute('data-theme', theme);
-    localStorage.setItem('theme', theme);
+    if (themeToggle.checked) {
+        document.body.setAttribute('data-theme', 'dark');
+        localStorage.setItem('theme', 'dark');
+    } else {
+        document.body.removeAttribute('data-theme');
+        localStorage.setItem('theme', 'light');
+    }
+}
+
+// Initialize theme based on localStorage or system preference
+function initializeTheme() {
+    const savedTheme = localStorage.getItem('theme');
+    if (savedTheme === 'dark' || (!savedTheme && prefersDarkScheme.matches)) {
+        document.body.setAttribute('data-theme', 'dark');
+        themeToggle.checked = true;
+    } else {
+        document.body.removeAttribute('data-theme');
+        themeToggle.checked = false;
+    }
 }
 
 function showModal(modalId) {
@@ -441,14 +454,15 @@ document.addEventListener('click', function(event) {
     }
 });
 
+document.addEventListener('DOMContentLoaded', initializeTheme);
+themeToggle.addEventListener('change', toggleTheme);
+
 document.addEventListener('DOMContentLoaded', function() {
     document.getElementById('eventsBtn').addEventListener('click', () => showSection('events'));
     document.getElementById('clientsBtn').addEventListener('click', () => showSection('clients'));
     document.getElementById('carsBtn').addEventListener('click', () => showSection('cars'));
     document.getElementById('circuitsBtn').addEventListener('click', () => showSection('circuits'));
     document.getElementById('priceListBtn').addEventListener('click', () => showSection('priceList'));
-    document.getElementById('themeSwitch').addEventListener('change', toggleTheme);
-    initializeTheme();
 });
 
 
