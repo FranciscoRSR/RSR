@@ -41,6 +41,18 @@ let currentCarIndex = null;
 let currentCircuitIndex = null;
 let selectedClients = new Set();
 
+function initializeTheme() {
+    const savedTheme = localStorage.getItem('theme') || 'light';
+    document.documentElement.setAttribute('data-theme', savedTheme);
+    document.getElementById('themeSwitch').checked = savedTheme === 'dark';
+}
+
+function toggleTheme() {
+    const isDark = document.getElementById('themeSwitch').checked;
+    const theme = isDark ? 'dark' : 'light';
+    document.documentElement.setAttribute('data-theme', theme);
+    localStorage.setItem('theme', theme);
+}
 
 function showModal(modalId) {
     const modal = document.getElementById(modalId);
