@@ -8,26 +8,29 @@
         <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.23/jspdf.plugin.autotable.min.js"></script>
         <link rel="stylesheet" href="styles.css">
         <link rel="icon" href="https://rsrbooking.com/assets/rsr-nurburg+spa-logo.svg" type="image/svg+xml">
+        <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/toastify-js/src/toastify.min.css">
+        <script defer src="https://cdn.jsdelivr.net/npm/toastify-js"></script>
     </head>
     <body>
         <header>
             <div class="logo">
-                <img src="https://rsrbooking.com/assets/rsr-nurburg+spa-logo.svg" alt="RSR Logo">
+                <img src="https://rsrbooking.com/assets/rsr-nurburg+spa-logo.svg" alt="RSR Nürburg+Spa Logo">
             </div>
             <nav class="main-nav">
-                <button id="eventsBtn">Events</button>
-                <button id="clientsBtn">Clients</button>
-                <button id="carsBtn">Cars</button>
-                <button id="circuitsBtn">Circuits</button>
-                <button id="priceListBtn">Price List</button>
-                <div class="theme-toggle">
-                    <input type="checkbox" id="themeSwitch" aria-label="Toggle dark mode">
-                    <label for="themeSwitch" class="theme-switch">
-                        <span class="sun-icon">☀️</span>
-                        <span class="moon-icon">🌙</span>
-                    </label>
-                </div>
+                <button onclick="showSection('createEventSection')">Create Event</button>
+                <button onclick="showSection('editEventSection')">Edit Event</button>
+                <button onclick="showSection('createCarSection')">Create Car</button>
+                <button onclick="showSection('editCarSection')">Edit Car</button>
+                <button onclick="showSection('createClientSection')">Create Client</button>
+                <button onclick="showSection('editClientSection')">Edit Client</button>
             </nav>
+            <div class="theme-toggle">
+                <input type="checkbox" id="themeToggle">
+                <label for="themeToggle" class="theme-toggle-label">
+                    <span class="theme-icon sun">☀</span>
+                    <span class="theme-icon moon">☾</span>
+                </label>
+            </div>
         </header>
     
         <main>
