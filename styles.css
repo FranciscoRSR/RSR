@@ -20,6 +20,8 @@
     --table-header-bg: #f0f0f0;
     --white: #FFFFFF;
     --transition: all 0.3s ease;
+    --car-assigned-bg: #d4edda; /* Green for fully assigned cars */
+    --car-partial-bg: #fff3cd; /* Yellow for partially assigned cars */
 }
 
 [data-theme="dark"] {
@@ -36,6 +38,8 @@
     --input-background: #333;
     --table-header-bg: #3a3a3a;
     --white: #2a2a2a;
+    --car-assigned-bg: #2e7d32; /* Darker green for assigned in dark mode */
+    --car-partial-bg: #a68b00; /* Darker yellow for partial in dark mode */
 }
 
 body {
@@ -318,6 +322,94 @@ button:hover {
 
 button:active {
     transform: translateY(0);
+}
+
+/* Car Assignment Buttons */
+.model-btn, .plate-btn {
+    margin: 5px;
+    padding: 8px 12px;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    transition: var(--transition);
+    font-size: 14px;
+}
+
+.model-btn {
+    background-color: var(--secondary-color);
+    color: var(--white);
+}
+
+.model-btn:hover {
+    background-color: var(--secondary-hover);
+}
+
+.model-btn.selected {
+    background-color: var(--car-assigned-bg);
+    color: var(--text-color);
+}
+
+.model-btn.partial {
+    background-color: var(--car-partial-bg);
+    color: var(--text-color);
+}
+
+.plate-btn {
+    background-color: var(--input-background);
+    color: var(--text-color);
+    border: 1px solid var(--border-color);
+}
+
+.plate-btn:hover {
+    background-color: var(--border-color);
+}
+
+.plate-btn.selected {
+    background-color: var(--car-assigned-bg);
+    color: var(--text-color);
+    border-color: var(--car-assigned-bg);
+}
+
+.select-all-btn {
+    background-color: var(--secondary-color);
+    color: var(--white);
+    padding: 8px 12px;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    font-size: 14px;
+    margin-bottom: 10px;
+    transition: var(--transition);
+}
+
+.select-all-btn:hover {
+    background-color: var(--secondary-hover);
+}
+
+.select-all-btn.selected {
+    background-color: var(--car-assigned-bg);
+    color: var(--text-color);
+}
+
+.expand-btn, .expand-pricing-btn, .modify-pricing-btn {
+    background-color: var(--secondary-color);
+    color: var(--white);
+    padding: 6px 10px;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    font-size: 13px;
+    margin-left: 5px;
+    transition: var(--transition);
+}
+
+.expand-btn:hover, .expand-pricing-btn:hover, .modify-pricing-btn:hover {
+    background-color: var(--secondary-hover);
+}
+
+.plates-list {
+    margin-top: 5px;
+    padding-left: 15px;
 }
 
 /* Modal */
