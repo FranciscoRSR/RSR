@@ -803,10 +803,15 @@ function assignCarsPricing() {
 
     for (const model in carsByModel) {
         const modelCars = carsByModel[model];
-        const allSelected = modelCars.every(car => event.available_cars.includes(car.license_plate));
+        const selectedPlates = modelCars.filter(car => event.available_cars.includes(car.license_plate));
+        const allSelected = selectedPlates.length === modelCars.length;
+        const partialSelected = selectedPlates.length > 0 && selectedPlates.length < modelCars.length;
+        
         availableCarsSelection.innerHTML += `
             <div class="model-group">
-                <button class="model-btn ${allSelected ? 'selected' : ''}" id="modelBtn_${model.replace(/\s+/g, '_')}" onclick="toggleModelSelection('${model}')">
+                <button class="model-btn ${allSelected ? 'selected' : partialSelected ? 'partial' : ''}" 
+                        id="modelBtn_${model.replace(/\s+/g, '_')}" 
+                        onclick="toggleModelSelection('${model}')">
                     ${model} (${modelCars.length} cars)
                 </button>
                 <button class="expand-btn" onclick="toggleExpandModel('${model}')">Expand</button>
@@ -1183,18 +1188,16 @@ function enterDrivenData() {
 
 function updateDrivenDataClients() {
     const event = events[currentEventIndex];
-    const drivenDaySelect = document.getElementById('drivenDay');
-    if (!drivenDaySelect) {
-        console.error("Driven day selector not found.");
-        drivenDataInputs.innerHTML = '<p>Error: Day selector not found.</p>';
+    const dayIndex = parseInt(document.getElementById('drivenDay').value);
+    if (isNaN(dayIndex)) {
+        alert("Please select a day.");
         return;
     }
-    
-    const dayIndex = parseInt(drivenDaySelect.value);
+
     const drivenDataInputs = document.getElementById('drivenDataInputs');
     drivenDataInputs.innerHTML = '';
     
-    if (isNaN(dayIndex) || dayIndex < 0 || dayIndex >= event.days.length) {
+    if (dayIndex < 0 || dayIndex >= event.days.length) {
         drivenDataInputs.innerHTML = '<p>Please select a valid day.</p>';
         return;
     }
@@ -1218,26 +1221,162 @@ function updateDrivenDataClients() {
             participant.driven_per_day[dayIndex] = Array(carsForDay.length).fill(0);
         }
 
-        let inputsHTML = `
-            <h4>${participant.client.name} ${participant.client.surname}</h4>
-        `;
+        // Initialize extras if not exists
+        if (!participant.extras) participant.extras = {};
+        if (!participant.extras[dayIndex]) participant.extras[dayIndex] = {};
+
+        const container = document.createElement('div');
+        container.className = 'driven-data-container';
+        
+        // Client name
+        const clientHeader = document.createElement('h4');
+        clientHeader.textContent = `${participant.client.name} ${participant.client.surname}`;
+        container.appendChild(clientHeader);
+
         if (carsForDay.length > 0) {
             carsForDay.forEach((carPlate, carIndex) => {
                 const car = cars.find(c => c.license_plate === carPlate);
-                inputsHTML += `
-                    <label>${car ? `${car.brand} ${car.model} (${carPlate})` : carPlate} (${unit}): 
+                const drivenValue = participant.driven_per_day[dayIndex][carIndex] || 0;
+                
+                const inputGroup = document.createElement('div');
+                inputGroup.className = 'car-driven-input';
+                
+                inputGroup.innerHTML = `
+                    <label>
+                        ${car ? `${car.brand} ${car.model} (${carPlate})` : carPlate}:
                         <input type="number" min="0" id="drivenValue_${participantIndex}_${carIndex}" 
-                               value="${participant.driven_per_day[dayIndex][carIndex] || 0}">
-                    </label><br>
+                               value="${drivenValue}">
+                        ${unit}
+                    </label>
                 `;
+                container.appendChild(inputGroup);
             });
         } else {
-            inputsHTML += '<p>No cars assigned for this day.</p>';
+            container.innerHTML += '<p>No cars assigned for this day.</p>';
         }
-        drivenDataInputs.innerHTML += inputsHTML;
+
+        // Extras dropdown
+        const extrasDropdown = document.createElement('div');
+        extrasDropdown.className = 'extras-dropdown';
+        extrasDropdown.innerHTML = `
+            <button class="extras-dropdown-btn">Extras</button>
+            <div class="extras-dropdown-content">
+                <label><input type="checkbox" class="extra-checkbox" value="GoPro&Vbox"> GoPro&Vbox</label>
+                <label><input type="checkbox" class="extra-checkbox" value="Instruction"> Instruction</label>
+                <label><input type="checkbox" class="extra-checkbox" value="Driver&Passenger"> Driver&Passenger</label>
+                <label><input type="checkbox" class="extra-checkbox" value="Misc"> Misc</label>
+            </div>
+        `;
+        container.appendChild(extrasDropdown);
+
+        // Existing extras for this participant/day
+        const currentExtras = participant.extras[dayIndex] || {};
+        for (const extraType in currentExtras) {
+            if (currentExtras[extraType]) {
+                const extraItem = document.createElement('div');
+                extraItem.className = 'extra-item';
+                
+                // For Misc extras, show the custom name and price
+                if (extraType.startsWith('Misc_')) {
+                    const miscName = extraType.replace('Misc_', '');
+                    extraItem.innerHTML = `
+                        ${miscName}:
+                        <input type="number" min="0" step="0.01" id="extraPrice_${participantIndex}_${dayIndex}_${extraType}" 
+                               value="${currentExtras[extraType].price || 0}" placeholder="Price">
+                        <button class="delete-extra-btn" onclick="this.parentElement.remove()">Delete</button>
+                    `;
+                } else {
+                    extraItem.innerHTML = `
+                        ${extraType}:
+                        <input type="number" min="0" id="extraQty_${participantIndex}_${dayIndex}_${extraType}" 
+                               value="${currentExtras[extraType].quantity || 1}" placeholder="Qty">
+                        <input type="number" min="0" step="0.01" id="extraPrice_${participantIndex}_${dayIndex}_${extraType}" 
+                               value="${currentExtras[extraType].price || 0}" placeholder="Price">
+                        <button class="delete-extra-btn" onclick="this.parentElement.remove()">Delete</button>
+                    `;
+                }
+                container.appendChild(extraItem);
+            }
+        }
+
+        drivenDataInputs.appendChild(container);
+    });
+
+    // Add event listeners for extras dropdown
+    document.querySelectorAll('.extras-dropdown-btn').forEach(btn => {
+        btn.addEventListener('click', function(e) {
+            e.stopPropagation();
+            const content = this.nextElementSibling;
+            content.style.display = content.style.display === 'block' ? 'none' : 'block';
+        });
+    });
+
+    // Close dropdowns when clicking outside
+    document.addEventListener('click', function() {
+        document.querySelectorAll('.extras-dropdown-content').forEach(content => {
+            content.style.display = 'none';
+        });
+    });
+
+    // Handle extra checkbox changes
+    document.querySelectorAll('.extra-checkbox').forEach(checkbox => {
+        checkbox.addEventListener('change', function() {
+            const dropdown = this.closest('.extras-dropdown');
+            const container = dropdown.closest('.driven-data-container');
+            const extraType = this.value;
+            const isChecked = this.checked;
+
+            // Find participant index from the container
+            const participantIndex = Array.from(container.parentNode.children).indexOf(container);
+
+            // Add or remove extra item
+            if (isChecked) {
+                const extraItem = document.createElement('div');
+                extraItem.className = 'extra-item';
+                
+                if (extraType === 'Misc') {
+                    // For Misc, prompt for a name
+                    const miscName = prompt("Enter name for Misc item:");
+                    if (!miscName) {
+                        this.checked = false;
+                        return;
+                    }
+                    const sanitizedMiscName = 'Misc_' + miscName.replace(/[.#$/[\]]/g, '_');
+                    extraItem.innerHTML = `
+                        ${miscName}:
+                        <input type="number" min="0" step="0.01" id="extraPrice_${participantIndex}_${dayIndex}_${sanitizedMiscName}" 
+                               value="0" placeholder="Price">
+                        <button class="delete-extra-btn" onclick="this.parentElement.remove()">Delete</button>
+                    `;
+                } else {
+                    extraItem.innerHTML = `
+                        ${extraType}:
+                        <input type="number" min="0" id="extraQty_${participantIndex}_${dayIndex}_${extraType}" 
+                               value="1" placeholder="Qty">
+                        <input type="number" min="0" step="0.01" id="extraPrice_${participantIndex}_${dayIndex}_${extraType}" 
+                               value="0" placeholder="Price">
+                        <button class="delete-extra-btn" onclick="this.parentElement.remove()">Delete</button>
+                    `;
+                }
+                dropdown.insertAdjacentElement('afterend', extraItem);
+            } else {
+                // Remove extra item if unchecked
+                const extraItem = container.querySelector(`.extra-item:has(input[id^="extraQty_${participantIndex}_${dayIndex}_${extraType}"])`) || 
+                                  container.querySelector(`.extra-item:has(input[id^="extraPrice_${participantIndex}_${dayIndex}_${extraType}"])`);
+                if (extraItem) {
+                    extraItem.remove();
+                }
+            }
+        });
     });
 }
 
+// Add this helper function at the top of your script.js
+function sanitizeFirebaseKey(key) {
+    return key.replace(/[.#$/[\]]/g, '_');
+}
+
+// Then modify the saveDrivenData function to use it:
 function saveDrivenData() {
     const event = events[currentEventIndex];
     const dayIndex = parseInt(document.getElementById('drivenDay').value);
@@ -1256,11 +1395,52 @@ function saveDrivenData() {
             parseFloat(document.getElementById(`drivenValue_${pIndex}_${carIdx}`).value) || 0
         );
 
-        // Ensure driven_per_day is an array of arrays; initialize if needed
-        if (!Array.isArray(participant.driven_per_day[0])) {
-            participant.driven_per_day = event.days.map(() => []);
-        }
+        // Save driven values
         participant.driven_per_day[dayIndex] = drivenValues;
+
+        // Initialize extras if not exists
+        if (!participant.extras) participant.extras = {};
+        
+        // Clear existing extras for this day
+        participant.extras[dayIndex] = {};
+        
+        // Get all extra items for this participant/day
+        const extraElements = document.querySelectorAll(`#drivenDataInputs > div:nth-child(${pIndex + 1}) .extra-item`);
+        extraElements.forEach(extraElement => {
+            const extraText = extraElement.textContent.trim();
+            if (extraText.includes(':')) {
+                const extraName = extraText.split(':')[0].trim();
+                const sanitizedExtraName = sanitizeFirebaseKey(extraName);
+                
+                // For Misc items, we already have the custom name
+                if (extraName.startsWith('Misc_')) {
+                    const priceInput = extraElement.querySelector('input[type="number"]');
+                    if (priceInput) {
+                        const price = parseFloat(priceInput.value) || 0;
+                        if (price > 0) {
+                            participant.extras[dayIndex][sanitizedExtraName] = {
+                                price: price,
+                                originalName: extraName.replace('Misc_', '') // Store the custom name without prefix
+                            };
+                        }
+                    }
+                } else {
+                    const qtyInput = extraElement.querySelector('input[type="number"]:first-of-type');
+                    const priceInput = extraElement.querySelector('input[type="number"]:last-of-type');
+                    if (qtyInput && priceInput) {
+                        const quantity = parseInt(qtyInput.value) || 0;
+                        const price = parseFloat(priceInput.value) || 0;
+                        if (quantity > 0 && price > 0) {
+                            participant.extras[dayIndex][sanitizedExtraName] = {
+                                quantity: quantity,
+                                price: price,
+                                originalName: extraName
+                            };
+                        }
+                    }
+                }
+            }
+        });
 
         // Update highest mileage for each car
         carsForDay.forEach((carPlate, carIdx) => {
@@ -1278,7 +1458,7 @@ function saveDrivenData() {
     saveData();
     document.getElementById('enterDrivenDataForm').style.display = 'none';
     updateCarsTable();
-    enterDrivenData()
+    enterDrivenData();
     hideAllEditForms();
 }
 
@@ -1423,9 +1603,21 @@ function calculateCircuitCredit(participant, event, trackDayIndices, circuit) {
     if (!circuit) return 0;
 
     const usageGroups = {};
+    let totalExtras = 0;
+    
     trackDayIndices.forEach(dayIndex => {
         const carsForDay = participant.car_per_day[dayIndex] || [];
         const drivenForDay = (participant.driven_per_day && participant.driven_per_day[dayIndex]) || [];
+
+        // Calculate extras for this day
+        if (participant.extras && participant.extras[dayIndex]) {
+            for (const extraType in participant.extras[dayIndex]) {
+                const extra = participant.extras[dayIndex][extraType];
+                if (extra && extra.price > 0) {
+                    totalExtras += extra.price * (extra.quantity || 1);
+                }
+            }
+        }
 
         carsForDay.forEach((carPlate, carIdx) => {
             if (carPlate) {
@@ -1520,8 +1712,9 @@ function calculateCircuitCredit(participant, event, trackDayIndices, circuit) {
         totalCost += carCost;
     }
 
-    return totalCost;
+    return Math.round(totalCost + totalExtras);
 }
+
 
 function viewEvent(index) {
     hideAllEditForms();
@@ -1531,51 +1724,70 @@ function viewEvent(index) {
     const tbody = document.getElementById('overviewTableBody');
 
     const circuitGroups = {};
+    // Track which days have extras
+    const daysWithExtras = new Set();
+    
+    const circuitColors = {
+        'N/A': [169, 169, 169],
+        'Spa': [135, 206, 235],
+        'Nürburgring GP Track': [152, 251, 152],
+        'Nurburgring Nordschleife': [255, 153, 153]
+    };
+
     event.days.forEach((day, dayIndex) => {
         const circuitName = day.circuit ? day.circuit.name : 'N/A';
         if (!circuitGroups[circuitName]) {
             circuitGroups[circuitName] = { days: [], pricingType: day.circuit ? day.circuit.pricing_type : 'N/A' };
         }
         circuitGroups[circuitName].days.push({ index: dayIndex, date: day.date });
+        
+        // Check if any participant has extras for this day
+        if (event.participants.some(p => p.extras && p.extras[dayIndex] && Object.keys(p.extras[dayIndex]).length > 0)) {
+            daysWithExtras.add(dayIndex);
+        }
     });
 
-    const circuitColors = {
-        'N/A': '#A9A9A9',
-        'Spa': '#87CEEB',
-        'Nürburgring GP Track': '#98FB98',
-        'Nurburgring Nordschleife': '#FF9999',
-    };
-
+    // Rest of the function remains the same until the header construction
     let headerRows = [[], []];
     headerRows[0].push({ content: 'Customer', colSpan: 1, rowSpan: 2 });
 
-    let currentColIndex = 1; // Track column position for borders
+    let currentColIndex = 1;
     Object.entries(circuitGroups).forEach(([circuitName, group], idx) => {
         const dayCount = group.days.length;
         const hasMultipleDays = dayCount > 1;
-        const isSingleTrack = Object.keys(circuitGroups).length === 1; // Check if there's only one track for the whole event
+        const isSingleTrack = Object.keys(circuitGroups).length === 1;
         
         const baseCols = 1 + dayCount;
         const usageCols = hasMultipleDays ? dayCount + 1 : 1;
-        const summaryCols = isSingleTrack ? 0 : 2; // Only show credit/balance columns if multiple tracks
-        const totalCircuitCols = baseCols + usageCols + summaryCols;
+        const summaryCols = isSingleTrack ? 0 : 2;
+        // Calculate extras columns only for days that have extras
+        const extrasCols = group.days.filter(d => daysWithExtras.has(d.index)).length;
+        const totalCircuitCols = baseCols + usageCols + summaryCols + extrasCols;
 
         const headerColor = circuitColors[circuitName] || `hsl(${idx * 60}, 50%, 80%)`;
-        // Top header with border-right for separation
         headerRows[0].push({ 
             content: circuitName, 
-            colSpan: totalCircuitCols, 
+            colSpan: totalCircuitCols,
             styles: { 
                 halign: 'center', 
                 backgroundColor: headerColor,
-                borderRight: idx < Object.keys(circuitGroups).length - 1 ? '2px solid #000' : 'none' // Line between circuits
+                borderRight: idx < Object.keys(circuitGroups).length - 1 ? '2px solid #000' : 'none'
             } 
         });
 
-        // Subheaders with the same color
         headerRows[1].push({ content: 'Paid Track', styles: { halign: 'center', backgroundColor: headerColor } });
         group.days.forEach(day => {
-            headerRows[1].push({ content: `Car Used (${day.date})`, styles: { halign: 'center', backgroundColor: headerColor } });
+            headerRows[1].push({ 
+                content: `Car Used (${day.date})`, 
+                styles: { halign: 'center', backgroundColor: headerColor } 
+            });
+            // Only add extras column if this day has extras
+            if (daysWithExtras.has(day.index)) {
+                headerRows[1].push({ 
+                    content: `Extras (${day.date})`, 
+                    styles: { halign: 'center', backgroundColor: headerColor } 
+                });
+            }
             if (hasMultipleDays) {
                 headerRows[1].push({ 
                     content: `${group.pricingType === 'per lap' ? 'Laps' : 'Km'} (${day.date})`, 
@@ -1594,14 +1806,13 @@ function viewEvent(index) {
         currentColIndex += totalCircuitCols;
     });
 
-    // Summary header with a left border to separate from circuits
     headerRows[0].push({ 
         content: 'Summary', 
         colSpan: 4, 
         styles: { 
             halign: 'center', 
             backgroundColor: '#D3D3D3', 
-            borderLeft: '2px solid #000' // Line before Summary
+            borderLeft: '2px solid #000'
         } 
     });
     headerRows[1].push({ content: 'Total Paid', styles: { backgroundColor: '#D3D3D3' } });
@@ -1652,6 +1863,34 @@ function viewEvent(index) {
                     return car ? `${car.model} (${plate})` : plate;
                 }).join(', ');
                 rowHTML += `<td>${carsForDay || 'N/A'}</td>`;
+                
+                // Only add extras column if this day has extras
+                if (daysWithExtras.has(day.index)) {
+                    let extrasText = '';
+                    if (participant.extras && participant.extras[day.index]) {
+                        const extras = participant.extras[day.index];
+                        const extrasList = [];
+                        let totalExtras = 0;
+                        
+                        for (const extraKey in extras) {
+                            const extra = extras[extraKey];
+                            if (extra && extra.price > 0) {
+                                // Use originalName if available (for Misc items)
+                                const extraType = extra.originalName || extraKey.replace(/_/g, ' ');
+                                const qty = extra.quantity || 1;
+                                const price = extra.price;
+                                extrasList.push(`${extraType} (${qty})`);
+                                totalExtras += qty * price;
+                            }
+                        }
+                        
+                        if (extrasList.length > 0) {
+                            extrasText = `${extrasList.join(', ')} = €${Math.round(totalExtras)}`;
+                        }
+                    }
+                    rowHTML += `<td>${extrasText || '-'}</td>`;
+                }
+                
                 if (group.days.length > 1) {
                     const drivenWithPackage = participant.driven_per_day[day.index].map((driven, i) => {
                         const pkg = participant.package_per_day[day.index][i] || 'basic';
@@ -1696,7 +1935,7 @@ function viewEvent(index) {
         row.innerHTML = rowHTML;
         tbody.appendChild(row);
     });
-
+    document.querySelector('#overviewForm h2').textContent = 'Event Overview';
     document.getElementById('overviewForm').style.display = 'block';
 }
 
@@ -1724,6 +1963,9 @@ function generateEventOverviewPDF() {
         'Nurburgring Nordschleife': [255, 153, 153]
     };
 
+    // Check if any participant has extras
+    const hasExtras = event.participants.some(p => p.extras && Object.keys(p.extras).length > 0);
+
     let headers = [[], []];
     headers[0].push({ content: 'Customer', colSpan: 1, rowSpan: 2 });
 
@@ -1734,14 +1976,18 @@ function generateEventOverviewPDF() {
         const hasMultipleDays = dayCount > 1;
         const baseCols = 1 + dayCount;
         const usageCols = hasMultipleDays ? dayCount + 1 : 1;
-        const summaryCols = isSingleTrack ? 0 : 2; // Only show credit/balance columns if multiple tracks
-        const totalCircuitCols = baseCols + usageCols + summaryCols;
+        const summaryCols = isSingleTrack ? 0 : 2;
+        const extrasCols = hasExtras ? dayCount : 0;
+        const totalCircuitCols = baseCols + usageCols + summaryCols + extrasCols;
 
         headers[0].push({ content: circuitName, colSpan: totalCircuitCols });
         headers[1].push('Paid Track');
         group.days.forEach(day => {
             const formattedDate = new Date(day.date).toLocaleString('en-US', { month: 'short', day: 'numeric' });
             headers[1].push(`Car Used (${formattedDate})`);
+            if (hasExtras) {
+                headers[1].push(`Extras (${formattedDate})`);
+            }
             if (hasMultipleDays) headers[1].push(`${group.pricingType === 'per lap' ? 'Laps' : 'Km'} (${formattedDate})`);
         });
         headers[1].push(`Total ${group.pricingType === 'per lap' ? 'Laps' : 'Km'}`);
@@ -1782,6 +2028,34 @@ function generateEventOverviewPDF() {
                 }).join(', ');
                 row.push(carsForDay || 'N/A');
                 colIndex++;
+
+                // Add extras column
+                if (hasExtras) {
+                    let extrasText = '';
+                    if (participant.extras && participant.extras[day.index]) {
+                        const extras = participant.extras[day.index];
+                        const extrasList = [];
+                        let totalExtras = 0;
+                        
+                        for (const extraType in extras) {
+                            if (extras[extraType] && extras[extraType].price > 0) {
+                                // Use originalName if available (for Misc items)
+                                const displayName = extras[extraType].originalName || extraType.replace(/_/g, ' ');
+                                const qty = extras[extraType].quantity || 1;
+                                const price = extras[extraType].price;
+                                extrasList.push(`${displayName} (${qty})`);
+                                totalExtras += qty * price;
+                            }
+                        }
+                        
+                        if (extrasList.length > 0) {
+                            extrasText = `${extrasList.join(', ')} = €${Math.round(totalExtras)}`;
+                        }
+                    }
+                    row.push(extrasText || '-');
+                    colIndex++;
+                }
+
                 if (group.days.length > 1) {
                     const drivenWithPackage = participant.driven_per_day[day.index].map((driven, i) => {
                         const pkg = participant.package_per_day[day.index][i] || 'basic';
@@ -1827,10 +2101,10 @@ function generateEventOverviewPDF() {
         const finalBalance = Math.round(totalPaid - totalCreditUsed);
         row.push(`€${finalBalance}`);
         if (finalBalance < 0) {
-            columnStyles[colIndex] = { fillColor: [255, 153, 153] }; // Red for negative
+            columnStyles[colIndex] = { fillColor: [255, 153, 153] };
         } else if (finalBalance > 0) {
-            columnStyles[colIndex] = { fillColor: [144, 238, 144] }; // Green for positive
-        } // No color for zero
+            columnStyles[colIndex] = { fillColor: [144, 238, 144] };
+        }
         row.push(participant.paid_status ? 'Yes' : 'No');
         colIndex++;
 
@@ -1889,7 +2163,7 @@ function generateEventOverviewPDF() {
         margin: { top: 25, left: 5, right: 5, bottom: 10 }
     });
 
-    // Rest of the PDF generation code remains the same...
+    // Rest of the PDF generation remains the same...
     doc.addPage('portrait');
     doc.setFontSize(14);
     doc.text(`Payment Details - ${event.name}`, 10, 10);
@@ -1931,6 +2205,30 @@ function generateEventOverviewPDF() {
                 ]);
                 totalPayments += payment.amount;
             });
+        }
+
+        // Add extras to payment details
+        if (participant.extras) {
+            for (const dayIndex in participant.extras) {
+                const dayExtras = participant.extras[dayIndex];
+                for (const extraType in dayExtras) {
+                    const extra = dayExtras[extraType];
+                    if (extra && extra.price > 0) {
+                        const day = event.days[dayIndex];
+                        const circuitName = day.circuit ? day.circuit.name : 'N/A';
+                        const total = (extra.quantity || 1) * extra.price;
+                        paymentData.push([
+                            clientName,
+                            `€${Math.round(total)}`,
+                            'Extra',
+                            circuitName,
+                            day.date,
+                            `${extraType} (${extra.quantity || 1})`
+                        ]);
+                        totalPayments += total;
+                    }
+                }
+            }
         }
     });
 
@@ -2121,6 +2419,26 @@ function showRemainingPackage() {
                     modelPackageMap.forEach(({ carModel, packageType, driven }) => {
                         dayContent += `${carModel}: Finished ${driven} ${group.unit} (${packageType})<br>`;
                     });
+
+                    // Show extras for finished day
+                    if (participant.extras && participant.extras[dayIndex]) {
+                        const extras = participant.extras[dayIndex];
+                        let extrasText = '';
+                        let totalExtras = 0;
+                        
+                        for (const extraType in extras) {
+                            if (extras[extraType] && extras[extraType].price > 0) {
+                                const qty = extras[extraType].quantity || 1;
+                                const price = extras[extraType].price;
+                                extrasText += `${extraType} (${qty}) = €${Math.round(qty * price)}<br>`;
+                                totalExtras += qty * price;
+                            }
+                        }
+                        
+                        if (extrasText) {
+                            dayContent += `<strong>Extras:</strong><br>${extrasText}`;
+                        }
+                    }
                 } else {
                     // Day is not finished - calculate remaining
                     if (balanceTrack < 1) {
@@ -2169,6 +2487,16 @@ function showRemainingPackage() {
                                 dayContent += `${carModel}: 0 (No credit) (${packageType})<br>`;
                             }
                         });
+
+                        // Calculate remaining credit for extras
+                        const totalExtrasUsed = participant.extras && participant.extras[dayIndex] 
+                            ? Object.values(participant.extras[dayIndex]).reduce((sum, extra) => sum + (extra.price * (extra.quantity || 1)), 0)
+                            : 0;
+                        const remainingForExtras = Math.max(0, balanceTrack - totalExtrasUsed);
+                        
+                        if (remainingForExtras > 0) {
+                            dayContent += `<br><strong>Available for extras: €${Math.round(remainingForExtras)}</strong>`;
+                        }
                     }
                 }
                 
