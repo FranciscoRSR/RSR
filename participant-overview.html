@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Participant Overview</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="section active">
+        <h1 id="eventTitle"></h1>
+        <h2 id="participantName"></h2>
+        <div class="table-container">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Day</th>
+                        <th>Car</th>
+                        <th>Package</th>
+                    </tr>
+                </thead>
+                <tbody id="tableBody"></tbody>
+            </table>
+        </div>
+    </div>
+
+    <script>
+        const urlParams = new URLSearchParams(window.location.search);
+        const data = JSON.parse(decodeURIComponent(urlParams.get('data')));
+        
+        document.getElementById('eventTitle').textContent = data.eventName;
+        document.getElementById('participantName').textContent = data.participantName;
+        
+        const tbody = document.getElementById('tableBody');
+        data.days.forEach((day, index) => {
+            if (!day.car || day.car === 'N/A') return; // Skip days with no car assigned
+            
+            const row = document.createElement('tr');
+            
+            const dayCell = document.createElement('td');
+            dayCell.textContent = `Day ${index + 1} (${day.date}) - ${day.circuit?.name || 'N/A'}`;
+            
+            const carCell = document.createElement('td');
+            carCell.textContent = day.car;
+            
+            const packageCell = document.createElement('td');
+            const unit = day.circuit?.pricing_type === 'per km' ? 'km' : 'laps';
+            
+            if (day.finished) {
+                packageCell.textContent = `${day.driven} ${unit} (Done)`;
+            } else if (day.remaining <= 0) {
+                packageCell.textContent = `0 ${unit} leftover (Extras to be paid)`;
+            } else {
+                packageCell.textContent = `${day.remaining} ${unit} (Remaining)`;
+            }
+            
+            row.appendChild(dayCell);
+            row.appendChild(carCell);
+            row.appendChild(packageCell);
+            tbody.appendChild(row);
+        });
+
+        // Apply theme from parent window if available
+        const theme = localStorage.getItem('theme');
+        if (theme === 'dark') {
+            document.body.setAttribute('data-theme', 'dark');
+        }
+    </script>
+</body>
+</html>
