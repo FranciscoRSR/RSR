@@ -3,11 +3,14 @@
 <head>
     <title>Participant Overview</title>
     <link rel="stylesheet" href="styles.css">
+    <!-- Firebase Compat SDK -->
+    <script src="https://www.gstatic.com/firebasejs/11.6.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/11.6.0/firebase-database-compat.js"></script>
 </head>
 <body>
     <div class="section active">
-        <h1 id="eventTitle"></h1>
-        <h2 id="participantName"></h2>
+        <h1 id="eventTitle">Loading...</h1>
+        <h2 id="participantName">Loading...</h2>
         <div class="table-container">
             <table>
                 <thead>
@@ -23,45 +26,119 @@
     </div>
 
     <script>
-        const urlParams = new URLSearchParams(window.location.search);
-        const data = JSON.parse(decodeURIComponent(urlParams.get('data')));
-        
-        document.getElementById('eventTitle').textContent = data.eventName;
-        document.getElementById('participantName').textContent = data.participantName;
-        
-        const tbody = document.getElementById('tableBody');
-        data.days.forEach((day, index) => {
-            if (!day.car || day.car === 'N/A') return; // Skip days with no car assigned
-            
-            const row = document.createElement('tr');
-            
-            const dayCell = document.createElement('td');
-            dayCell.textContent = `Day ${index + 1} (${day.date}) - ${day.circuit?.name || 'N/A'}`;
-            
-            const carCell = document.createElement('td');
-            carCell.textContent = day.car;
-            
-            const packageCell = document.createElement('td');
-            const unit = day.circuit?.pricing_type === 'per km' ? 'km' : 'laps';
-            
-            if (day.finished) {
-                packageCell.textContent = `${day.driven} ${unit} (Done)`;
-            } else if (day.remaining <= 0) {
-                packageCell.textContent = `0 ${unit} leftover (Extras to be paid)`;
-            } else {
-                packageCell.textContent = `${day.remaining} ${unit} (Remaining)`;
-            }
-            
-            row.appendChild(dayCell);
-            row.appendChild(carCell);
-            row.appendChild(packageCell);
-            tbody.appendChild(row);
-        });
+        // Firebase Configuration
+        const firebaseConfig = {
+            apiKey: "AIzaSyCVH9tFfsmm040flswAVgPoXWAqcb_CDqY",
+            authDomain: "rsr-event-management.firebaseapp.com",
+            databaseURL: "https://rsr-event-management-default-rtdb.firebaseio.com",
+            projectId: "rsr-event-management",
+            storageBucket: "rsr-event-management.appspot.com",
+            messagingSenderId: "586578702881",
+            appId: "1:586578702881:web:e9091b4a11576eaa35a960"
+        };
 
-        // Apply theme from parent window if available
-        const theme = localStorage.getItem('theme');
-        if (theme === 'dark') {
-            document.body.setAttribute('data-theme', 'dark');
+        // Initialize Firebase
+        let db;
+        try {
+            const app = firebase.initializeApp(firebaseConfig);
+            db = firebase.database();
+            loadParticipantData();
+        } catch (error) {
+            console.error("Firebase initialization failed:", error);
+            document.getElementById('eventTitle').textContent = "Error";
+            document.getElementById('participantName').textContent = "Failed to connect to database.";
+        }
+
+        function loadParticipantData() {
+            const urlParams = new URLSearchParams(window.location.search);
+            const eventId = urlParams.get('eventId');
+            const participantId = urlParams.get('participantId');
+
+            if (!eventId || !participantId) {
+                document.getElementById('eventTitle').textContent = "Error";
+                document.getElementById('participantName').textContent = "Invalid event or participant ID.";
+                return;
+            }
+
+            const eventRef = db.ref(`events/${eventId}`);
+            eventRef.on('value', (snapshot) => {
+                const eventData = snapshot.val();
+                if (!eventData) {
+                    document.getElementById('eventTitle').textContent = "Error";
+                    document.getElementById('participantName').textContent = "Event not found.";
+                    return;
+                }
+
+                const participant = eventData.participants ? eventData.participants[participantId] : null;
+                if (!participant) {
+                    document.getElementById('eventTitle').textContent = eventData.name || "Unknown Event";
+                    document.getElementById('participantName').textContent = "Participant not found.";
+                    return;
+                }
+
+                // Update event and participant details
+                document.getElementById('eventTitle').textContent = eventData.name || "Unnamed Event";
+                document.getElementById('participantName').textContent = `${participant.client.name} ${participant.client.surname}`;
+
+                // Update table
+                const tbody = document.getElementById('tableBody');
+                tbody.innerHTML = ''; // Clear existing rows
+
+                eventData.days.forEach((day, index) => {
+                    const carsForDay = participant.car_per_day[index] || [];
+                    const packagesForDay = participant.package_per_day[index] || [];
+                    const drivenForDay = participant.driven_per_day[index] || [];
+
+                    carsForDay.forEach((carPlate, carIndex) => {
+                        if (!carPlate || carPlate === 'N/A') return; // Skip invalid cars
+
+                        const row = document.createElement('tr');
+
+                        const dayCell = document.createElement('td');
+                        dayCell.textContent = `Day ${index + 1} (${day.date}) - ${day.circuit?.name || 'N/A'}`;
+
+                        const carCell = document.createElement('td');
+                        carCell.textContent = carPlate;
+
+                        const packageCell = document.createElement('td');
+                        const unit = day.circuit?.pricing_type === 'per km' ? 'km' : 'laps';
+                        const packageType = packagesForDay[carIndex] || 'N/A';
+                        const driven = drivenForDay[carIndex] || 0;
+
+                        // Calculate remaining laps/km
+                        let remaining = 0;
+                        // Assuming LapsAvailableModel is available or similar logic is implemented
+                        // For simplicity, we'll use a placeholder calculation
+                        // Ideally, integrate LapsAvailableModel from script.js
+                        const totalCredit = participant.package_payment && participant.package_payment[day.circuit?.name] || 0;
+                        const pricePerUnit = 100; // Placeholder: Replace with actual pricing logic
+                        remaining = Math.floor(totalCredit / pricePerUnit) - driven;
+
+                        if (day.finished) {
+                            packageCell.textContent = `${driven} ${unit} (Done)`;
+                        } else if (remaining <= 0) {
+                            packageCell.textContent = `0 ${unit} leftover (Extras to be paid)`;
+                        } else {
+                            packageCell.textContent = `${remaining} ${unit} (Remaining)`;
+                        }
+
+                        row.appendChild(dayCell);
+                        row.appendChild(carCell);
+                        row.appendChild(packageCell);
+                        tbody.appendChild(row);
+                    });
+                });
+
+                // Apply theme from localStorage if available
+                const theme = localStorage.getItem('theme');
+                if (theme === 'dark') {
+                    document.body.setAttribute('data-theme', 'dark');
+                }
+            }, (error) => {
+                console.error("Error fetching event data:", error);
+                document.getElementById('eventTitle').textContent = "Error";
+                document.getElementById('participantName').textContent = "Failed to load event data.";
+            });
         }
     </script>
 </body>
