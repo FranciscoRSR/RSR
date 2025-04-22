@@ -2504,29 +2504,13 @@ function showRemainingPackage() {
 }
 
 function openParticipantOverview(eventIndex, participantIndex) {
-    const event = events[eventIndex];
-    const participant = event.participants[participantIndex];
-    const encodedData = encodeURIComponent(JSON.stringify({
-        eventName: event.name,
-        participantName: `${participant.client.name} ${participant.client.surname}`,
-        days: event.days.map((day, dayIndex) => ({
-            date: day.date,
-            circuit: day.circuit ? {
-                name: day.circuit.name,
-                pricing_type: day.circuit.pricing_type
-            } : null,
-            finished: day.finished || false,
-            car: participant.car_per_day[dayIndex] ? 
-                 cars.find(c => c.license_plate === participant.car_per_day[dayIndex][0])?.model : 'N/A',
-            package: participant.package_per_day[dayIndex] ? 
-                    participant.package_per_day[dayIndex][0] : 'N/A',
-            driven: participant.driven_per_day[dayIndex] ? 
-                   participant.driven_per_day[dayIndex][0] : 0,
-            remaining: calculateRemainingForDay(event, participant, dayIndex)
-        }))
-    }));
+    const eventId = eventIndex; // Assuming eventIndex is the Firebase event ID
+    const participantId = participantIndex; // Assuming participantIndex is the participant ID in the event's participants object
     
-    const url = `participant-overview.html?data=${encodedData}`;
+    // Generate URL with eventId and participantId
+    const url = `https://rsr-event-management.netlify.app/participant-overview.html?eventId=${eventId}&participantId=${participantId}`;
+    
+    // Open the URL in a new window
     window.open(url, '_blank', 'width=600,height=400');
 }
 
