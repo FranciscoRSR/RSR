@@ -340,6 +340,16 @@ function updateParticipantsTable() {
         let rowHTML = `<td>${participant.client.name} ${participant.client.surname}</td>`;
 
         event.days.forEach((day, dayIndex) => {
+            // Initialize arrays if they don't exist
+            if (!participant.car_per_day) participant.car_per_day = [];
+            if (!participant.package_per_day) participant.package_per_day = [];
+            if (!participant.driven_per_day) participant.driven_per_day = [];
+            
+            // Ensure arrays for this day exist
+            if (!participant.car_per_day[dayIndex]) participant.car_per_day[dayIndex] = [];
+            if (!participant.package_per_day[dayIndex]) participant.package_per_day[dayIndex] = [];
+            if (!participant.driven_per_day[dayIndex]) participant.driven_per_day[dayIndex] = [];
+
             const carsForDay = participant.car_per_day[dayIndex] || [];
             const packagesForDay = participant.package_per_day[dayIndex] || [];
             let cellHTML = '<div class="car-selection-group">';
@@ -499,8 +509,9 @@ function addSelectedClients() {
     selectedClients.forEach(selectedClientName => {
         const client = clients.find(c => `${c.name} ${c.surname}` === selectedClientName);
         if (client && !event.participants.some(p => `${p.client.name} ${p.client.surname}` === selectedClientName)) {
-            const carsPerDay = Array(event.days.length).fill([]); // Empty arrays for each day
-            const packagesPerDay = Array(event.days.length).fill([]);
+            // Initialize arrays with proper length
+            const carsPerDay = Array(event.days.length).fill().map(() => []);
+            const packagesPerDay = Array(event.days.length).fill().map(() => []);
             const drivenPerDay = Array(event.days.length).fill().map(() => []);
 
             event.participants.push({
@@ -592,6 +603,16 @@ function removeParticipant(participantIndex) {
 // Save all participant changes (unchanged)
 function saveAllParticipants() {
     const event = events[currentEventIndex];
+    if (!event || !Array.isArray(event.days)) {
+        console.error("Invalid event or days array:", event);
+        alert("Error: Invalid event data.");
+        return;
+    }
+
+    // Ensure cars_assigned is an object
+    if (!event.cars_assigned || typeof event.cars_assigned !== 'object') {
+        event.cars_assigned = {};
+    }
 
     event.participants.forEach((participant, participantIndex) => {
         const carsPerDay = [];
@@ -608,32 +629,47 @@ function saveAllParticipants() {
             );
         }
 
+        // Get all rows in the participants table
+        const participantRows = document.querySelectorAll('#participantsTableBody tr');
+        
+        // Only process if we found the participant row
+        if (participantIndex >= participantRows.length) {
+            console.warn(`No table row found for participant ${participantIndex}`);
+            return;
+        }
+
+        const participantRow = participantRows[participantIndex];
+        
         event.days.forEach((day, dayIndex) => {
-            const carSelections = document.querySelectorAll(`#participantsTableBody tr:nth-child(${participantIndex + 1}) td:nth-child(${dayIndex + 2}) .car-selection`);
+            // Get the cell for this day (skip first cell which is client name)
+            const dayCell = participantRow.cells[dayIndex + 1];
+            if (!dayCell) {
+                console.warn(`No cell found for day ${dayIndex} for participant ${participantIndex}`);
+                return;
+            }
+            
+            const carSelections = dayCell.querySelectorAll('.car-selection');
             const dayCars = [];
             const dayPackages = [];
 
             carSelections.forEach((selection, carIdx) => {
-                const carElement = document.getElementById(`car_${participantIndex}_${dayIndex}_${carIdx}`);
-                const packageElement = document.getElementById(`package_${participantIndex}_${dayIndex}_${carIdx}`);
+                const carSelect = selection.querySelector('select:first-of-type');
+                const packageSelect = selection.querySelector('select:last-of-type');
+                
+                if (carSelect && packageSelect) {
+                    const car = carSelect.value;
+                    const packageType = packageSelect.value;
 
-                if (!carElement || !packageElement) {
-                    console.warn(`Missing element for car_${participantIndex}_${dayIndex}_${carIdx} or package_${participantIndex}_${dayIndex}_${carIdx}`);
-                    return;
-                }
-
-                const car = carElement.value;
-                const packageType = packageElement.value;
-
-                // Only add cars and packages if both are selected
-                if (car && packageType) {
-                    dayCars.push(car);
-                    dayPackages.push(packageType);
-                    // Ensure cars_assigned[dayIndex] is initialized
-                    if (!event.cars_assigned[dayIndex]) {
-                        event.cars_assigned[dayIndex] = {};
+                    // Only add cars and packages if both are selected
+                    if (car && packageType) {
+                        dayCars.push(car);
+                        dayPackages.push(packageType);
+                        // Ensure cars_assigned[dayIndex] is initialized
+                        if (!event.cars_assigned[dayIndex]) {
+                            event.cars_assigned[dayIndex] = {};
+                        }
+                        event.cars_assigned[dayIndex][car] = `${participant.client.name} ${participant.client.surname}`;
                     }
-                    event.cars_assigned[dayIndex][car] = `${participant.client.name} ${participant.client.surname}`;
                 }
             });
 
@@ -652,10 +688,6 @@ function saveAllParticipants() {
         participant.car_per_day = carsPerDay;
         participant.package_per_day = packagesPerDay;
     });
-
-    // Remove the filter that requires cars to be assigned
-    // event.participants = event.participants.filter(p => p.car_per_day.some(day => day.length > 0));
-    // Instead, ensure all participants are kept, even with no cars
 
     saveData();
     updateParticipantsTable();
